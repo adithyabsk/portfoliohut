@@ -1,0 +1,74 @@
+{% load static %}
+<!doctype html>
+<html lang="en">
+<head>
+
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+
+    <!-- Bootstrap CSS Bundle -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.0.0-beta2/dist/css/bootstrap.min.css" rel="stylesheet"
+          integrity="sha384-BmbxuPwQa2lc/FVzBcNJ7UAyJxM6wuqIj61tLrc4wSX0szH/Ev+nYRRuWlolflfl" crossorigin="anonymous">
+    <!-- Custom CSS -->
+    <link rel="stylesheet" href="{%  static "portfoliohut/css/socialnetwork.css" %}">
+
+    {% block head %}
+    {% endblock head %}
+
+    <nav class="navbar navbar-light bg-light">
+        <div class="container-fluid">
+            <a class="navbar-brand" href="/global-stream">[Thefacebook]</a>
+            {% url "global-stream" as global_stream_url %}
+            {% url "follower-stream" as follower_stream_url %}
+            {% url "profile" as profile_url %}
+            {% url "login" as login_url %}
+            {% url "logout" as logout_url %}
+            {% url "register" as register_url %}
+            {% if login_url == request.path %}
+                <a href="{{ register_url }}" id="id_register_link">Register</a>
+            {% elif register_url == request.path %}
+                <a href="{{ login_url }}" id="id_login_link">Login</a>
+            {# TODO: convert this to only if logged in #}
+            {% elif request.user is not None %}
+                <a href="{{ profile_url }}" id="id_logged_in_user_name">{{ request.user.first_name|add:" "|add:request.user.last_name }}</a>
+            {% endif %}
+            <button class="navbar-toggler ms-auto" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav"
+                    aria-controls="navbarNav" aria-expanded="false" aria-label="Toggle navigation" id="id_show_nav_button">
+                <span class="navbar-toggler-icon"></span>
+            </button>
+            <div class="collapse navbar-collapse" id="navbarNav">
+                <ul class="navbar-nav">
+                    {# Setup showing which page is active #}
+                    <li class="nav-item">
+                        <a class="nav-link {% if global_stream_url in request.path %} active {%  endif %}"
+                           href="{{ global_stream_url }}" id="id_nav_global_stream">Global Stream</a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link {% if follower_stream_url in request.path %} active {%  endif %}"
+                           href="{{ follower_stream_url }}" id="id_nav_follower_stream">Follower Stream</a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link {% if profile_url in request.path %} active {%  endif %}"
+                           href="{{ profile_url }}" id="id_nav_profile">My Profile</a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link {% if not user.is_authenticated %} disabled {%  endif %}"\
+                           href="{{ logout_url }}" id="id_nav_logout">Logout</a>
+                    </li>
+                </ul>
+            </div>
+        </div>
+    </nav>
+
+</head>
+<body>
+
+{% block content %}
+{% endblock content %}
+
+<!-- Bootstrap JS Bundle -->
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.0.0-beta2/dist/js/bootstrap.bundle.min.js"
+        integrity="sha384-b5kHyXgcpbZJO/tY9Ul7kGkf1S0CWuKcCD38l8YkeH8z8QjE0GmW1gYU5S9FOnJ0"
+        crossorigin="anonymous"></script>
+</body>
+</html>
