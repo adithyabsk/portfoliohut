@@ -11,5 +11,5 @@ urlpatterns = [
     path("register", register_action, name="register"),
     path("global-stream", global_stream, name="global-stream"),
     path("follower-stream", follower_stream, name="follower-stream"),
-    path("profile", profile, name="profile")
+    path("profile", profile, name="profile"),
 ]
