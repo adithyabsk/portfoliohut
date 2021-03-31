@@ -1,8 +1,9 @@
 """Social Network Forms."""
 from django import forms
+from django.utils import timezone
 from django.contrib.auth import authenticate
 from django.contrib.auth.models import User
-
+from portfoliohut.models import Stock
 
 class LoginForm(forms.Form):
     """Validate login registration details."""
@@ -23,12 +24,12 @@ class LoginForm(forms.Form):
 
 class RegisterForm(forms.Form):
     """Validate registration details."""
+    first_name = forms.CharField()
+    last_name = forms.CharField()
+    email = forms.EmailField()
     username = forms.CharField()
     password = forms.CharField(widget=forms.PasswordInput())
     confirm_password = forms.CharField(widget=forms.PasswordInput())
-    email = forms.EmailField()
-    first_name = forms.CharField()
-    last_name = forms.CharField()
 
     def clean(self):
         cleaned_data = super().clean()
@@ -47,3 +48,40 @@ class RegisterForm(forms.Form):
             raise forms.ValidationError("Username is taken.")
 
         return username
+
+class StockForm(forms.ModelForm):
+    class Meta:
+        model = Stock
+        fields = {
+            'action',
+            'ticker',
+            'date_time',
+            'price',
+            'quantity'
+        }
+        labels = {
+            'action': 'Trasnaction Type',
+            'ticker': 'Ticker',
+            'date_time': 'Date and Time of Transaction',
+            'price': 'Price at Time of Transaction',
+            'quantity': 'Number of Shares'
+        }
+    
+    def clean_action(self):
+        action = self.cleaned_data.get('action')
+        if action != 'BUY' and action != 'SELL':
+            raise forms.ValidationError("Invalid transaction type")
+        return action
+
+    def clean_date_time(self):
+        date_time = self.cleaned_data['date_time']
+        if date_time > timezone.now():
+            raise forms.ValidationError("Invalid date")
+        return date_time
+
+    def clean_ticker(self):
+        # Can we check to make sure the ticker is valid using Yahoo Finance?
+        ticker = self.cleaned_data['ticker']
+        return ticker
+
+
