@@ -210,4 +210,4 @@ Logo and Color Scheme
 
 ## Product Specification Presentation
 
-*[Product Spec Presentation](https://docs.google.com/presentation/d/16Xen7WtpC4lZ4daCXrLulgiIq_7VF68tR_1Ew8xzfOo/edit#slide=id.p)
+* [Product Spec Presentation](https://docs.google.com/presentation/d/16Xen7WtpC4lZ4daCXrLulgiIq_7VF68tR_1Ew8xzfOo/edit#slide=id.p)
