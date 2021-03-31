@@ -207,3 +207,7 @@ using the same approach as defined above) each entry as itemized above.
 Logo and Color Scheme
 
 ![Logo and Color Scheme](./mockups/LogoColorScheme.png)
+
+## Product Specification Presentation
+
+*[Product Spec Presentation](https://docs.google.com/presentation/d/16Xen7WtpC4lZ4daCXrLulgiIq_7VF68tR_1Ew8xzfOo/edit#slide=id.p)
