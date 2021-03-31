@@ -200,6 +200,8 @@ using the same approach as defined above) each entry as itemized above.
 
 ## Django Models
 
+![Django Models](./mockups/NewModels.png)
+
 * [Django Models](https://github.com/cmu-webapps/s21_team_11/blob/main/portfoliohut/models.py)
 
 ## Page Mockups
