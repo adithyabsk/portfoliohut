@@ -210,6 +210,16 @@ Logo and Color Scheme
 
 ![Logo and Color Scheme](./mockups/LogoColorScheme.png)
 
+![Logged in User Profile Page](./mockups/logged_in_user_profile.png)
+
+![Other User Profile Page](./mockups/other_user_profile.png)
+
+![Portfolio Page](./mockups/portfolio.png)
+
+![Transaction Page](./mockups/transaction.png)
+
+![Competition Page](./mockups/competition.png)
+
 ## Product Specification Presentation
 
 * [Product Spec Presentation](https://docs.google.com/presentation/d/16Xen7WtpC4lZ4daCXrLulgiIq_7VF68tR_1Ew8xzfOo/edit#slide=id.p)
