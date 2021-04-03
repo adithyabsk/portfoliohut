@@ -114,10 +114,12 @@ def add_data_from_csv(request,file):
         reader = csv.DictReader(decoded_file)
         for row in reader:
             date = (datetime.strptime(row["DATE"], '%m/%d/%Y').date())
-            ticker = row["TICKER"]
+            action = 'BUY' if float(row["AMOUNT"]) < 0 else 'SELL'
+            ticker = row["SYMBOL"]
             price = row["PRICE"]
             quantity = row["QUANTITY"]
-            action = row["ACTION"]
+            print(action)
+            print(quantity)
             if(validate_csv(date, ticker, price, quantity, action)):
                 new_stock = Stock(profile = request.user.profile,
                         action = action,
@@ -129,7 +131,6 @@ def add_data_from_csv(request,file):
                 new_stock.save()
     
     except:
-        messages.error(request, 'Incorrect data provided')
         return
 
 @login_required
