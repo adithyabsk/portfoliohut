@@ -5,7 +5,8 @@ from django.contrib.auth.decorators import login_required
 from django.contrib.auth.models import User
 from django.contrib.auth import authenticate, login, logout
 
-from .forms import LoginForm, RegisterForm
+from portfoliohut.forms import LoginForm, RegisterForm, ProfileForm
+from portfoliohut.models import Profile
 
 
 def index(request):
@@ -58,6 +59,9 @@ def register_action(request):
                                         last_name=register_form.cleaned_data['last_name'])
     new_user.save()
 
+    profile = Profile.objects.create(user=new_user)
+    profile.save()
+
     new_user = authenticate(username=register_form.cleaned_data['username'],
                             password=register_form.cleaned_data['password'])
 
@@ -67,17 +71,29 @@ def register_action(request):
 
 @login_required
 def global_stream(request):
-    return render(request, "portfoliohut/stream.html", {"page_name": "Global Stream"})
+    context = {}
+    profiles = Profile.objects.all()
+    context['profiles'] = profiles
+    context['page_name'] = 'Global Competition'
+    return render(request, "portfoliohut/stream.html", context)
 
 
 @login_required
 def follower_stream(request):
-    return render(request, "portfoliohut/stream.html", {"page_name": "Follower Stream"})
+    context = {}
+    context['page_name'] = 'Friends Competition'
+    return render(request, "portfoliohut/stream.html", context)
 
 
 @login_required
-def profile(request):
-    if request.method == 'GET' and request.GET.get("user") is not None:
-        return render(request, "portfoliohut/profile.html", {"self_user": False})
-    else:
-        return render(request, "portfoliohut/profile.html", {"self_user": True})
+def profile_page(request, id_num):
+    context = {}
+    
+    profile_exists = Profile.objects.filter(id=id_num)
+    if not profile_exists:
+        return redirect('index')
+    
+    context['profile'] = Profile.objects.get(id=id_num)
+    context['logged_in_user'] = Profile.objects.get(user=request.user)
+
+    return render(request, "portfoliohut/profile.html", context)
