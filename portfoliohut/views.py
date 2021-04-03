@@ -5,8 +5,8 @@ from django.contrib.auth.decorators import login_required
 from django.contrib.auth.models import User
 from django.contrib.auth import authenticate, login, logout
 
-from .forms import LoginForm, RegisterForm
-
+from .forms import LoginForm, RegisterForm, StockForm
+from .models import *
 
 def index(request):
     if request.user.is_authenticated:
@@ -61,6 +61,9 @@ def register_action(request):
     new_user = authenticate(username=register_form.cleaned_data['username'],
                             password=register_form.cleaned_data['password'])
 
+    new_profile = Profile(user = new_user, bio = "Hello World")
+    new_profile.save()
+
     login(request, new_user)
     return redirect(reverse('index'))
 
@@ -81,3 +84,36 @@ def profile(request):
         return render(request, "portfoliohut/profile.html", {"self_user": False})
     else:
         return render(request, "portfoliohut/profile.html", {"self_user": True})
+
+
+@login_required
+def validate_transaction(stock_data = None, cash_data = None):
+    #TODO: check the transaction given some form data, return true or false
+    
+    return True
+
+@login_required
+def transcation_input(request):
+    if request.method == "GET":
+        return render(request, "portfoliohut/add_transaction.html", {'stock_form' : StockForm()})
+    
+    context = {}
+
+    stock_form = StockForm(request.POST)
+    context['stock_form'] = stock_form
+
+    #Check if the transaction data is valid
+    if not stock_form.is_valid():
+        return render(request, "portfoliohut/add_transaction.html", context)
+
+    #Create a stock object if it's validate_transaction
+    new_stock = Stock(profile = request.user.profile,
+                      action = stock_form.cleaned_data['action'],
+                      ticker = stock_form.cleaned_data['ticker'],
+                      date_time =stock_form.cleaned_data['date_time'],
+                      price = stock_form.cleaned_data['price'],
+                      quantity =stock_form.cleaned_data['quantity'])
+
+    new_stock.save()
+
+    return render(request, "portfoliohut/add_transaction.html", {'stock_form' : StockForm()})

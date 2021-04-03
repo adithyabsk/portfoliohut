@@ -1,0 +1,29 @@
+{% extends 'portfoliohut/base.html' %}
+{% load static %}
+{% block head %}
+  <link rel="stylesheet" href="{% static "portfoliohut/css/remove-asterisk.css" %}">
+  <title>Add Transactions</title>
+{% endblock head %}
+
+{% block content %}
+  <div class="container">
+    <div class="row mt-5">
+      <h1 class="text-center" id="id_page_name">Add Transactions</h1>
+    </div>
+    <div class="row m-3 d-flex justify-content-center">
+      <div class="col-md-6">
+        <form method = "POST">
+          {% csrf_token %}
+          <!-- TODO: Add the stock form here  -->
+
+          <div class="row">
+            {{stock_form}}
+          <button type="submit" class="btn btn-primary" id="id_post_button">Submit</button>
+        </form>
+      </div>
+    </div>
+    
+      </div>
+    </div>
+  </div>
+{% endblock content %}
