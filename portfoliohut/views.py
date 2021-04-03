@@ -1,12 +1,17 @@
 from django.shortcuts import render, redirect
 from django.urls import reverse
 
+from django.contrib.messages import constants as messages
 from django.contrib.auth.decorators import login_required
 from django.contrib.auth.models import User
 from django.contrib.auth import authenticate, login, logout
 
-from .forms import LoginForm, RegisterForm, StockForm, CashForm
+from .forms import LoginForm, RegisterForm, StockForm, CashForm, CSVForm
 from .models import *
+
+from datetime import datetime
+import csv
+import pandas as pd
 
 def index(request):
     if request.user.is_authenticated:
@@ -92,10 +97,45 @@ def validate_transaction(stock_data = None, cash_data = None):
     
     return True
 
+
+def validate_csv(date, ticker, price, quantity, action):
+    #TODO
+    pass
+
+
+
+def add_data_from_csv(request,file):
+    try:
+        if not file.name.endswith('.csv'):
+            messages.error(request,'File is not a CSV file')
+            return
+
+        decoded_file = file.read().decode('utf-8').splitlines()
+        reader = csv.DictReader(decoded_file)
+        for row in reader:
+            date = (datetime.strptime(row["DATE"], '%m/%d/%Y').date())
+            ticker = row["TICKER"]
+            price = row["PRICE"]
+            quantity = row["QUANTITY"]
+            action = row["ACTION"]
+            if(validate_csv(date, ticker, price, quantity, action)):
+                new_stock = Stock(profile = request.user.profile,
+                        action = action,
+                        ticker = ticker,
+                        date_time =date,
+                        price = price,
+                        quantity = quantity)
+
+                new_stock.save()
+    
+    except:
+        messages.error(request, 'Incorrect data provided')
+        return
+
 @login_required
 def transcation_input(request):
     if request.method == "GET":
-        return render(request, "portfoliohut/add_transaction.html", {'stock_form' : StockForm(), 'cash_form': CashForm()})
+        return render(request, "portfoliohut/add_transaction.html", {'stock_form' : StockForm(), 'cash_form': CashForm(), 'csv_form':CSVForm()})
     
     context = {}
 
@@ -116,6 +156,13 @@ def transcation_input(request):
                         quantity =stock_form.cleaned_data['quantity'])
 
         new_stock.save()
+
+    if('submit_csv' in request.POST):
+        csv_form = CSVForm(request.POST, request.FILES)
+        context['csv_form'] = csv_form
+        if csv_form.is_valid():
+            add_data_from_csv(request, request.FILES['file'])
+    
 
     if(request.POST.get('submit_cash')):
         cash_form = CashForm(request.POST)

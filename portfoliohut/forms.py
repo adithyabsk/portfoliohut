@@ -49,6 +49,8 @@ class RegisterForm(forms.Form):
 
         return username
 
+class CSVForm(forms.Form):
+    file = forms.FileField(allow_empty_file=True)
 class StockForm(forms.ModelForm):
     class Meta:
         model = Stock
