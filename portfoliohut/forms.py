@@ -3,7 +3,7 @@ from django import forms
 from django.utils import timezone
 from django.contrib.auth import authenticate
 from django.contrib.auth.models import User
-from portfoliohut.models import Stock
+from portfoliohut.models import Stock, CashBalance
 
 class LoginForm(forms.Form):
     """Validate login registration details."""
@@ -85,6 +85,38 @@ class StockForm(forms.ModelForm):
             raise forms.ValidationError("Invalid stock price")
 
         return price
+    
+    def clean_date_time(self):
+        date_time = self.cleaned_data.get('date_time')
+        if date_time > timezone.now():
+            raise forms.ValidationError("Invalid date")
+        return date_time
+
+
+class CashForm(forms.ModelForm):
+    class Meta:
+        model = CashBalance
+        fields = {
+            'action',
+            'date_time',
+            'value',
+        }
+        labels = {
+            'action': 'Trasnaction Type',
+            'date_time': 'Date and Time of Transaction',
+            'value': 'Dollar Amount',
+        }
+
+    def clean(self):
+        cleaned_data = super().clean()
+        return cleaned_data
+    
+    def clean_value(self):
+        value = self.cleaned_data.get('value')
+        if(value < 0):
+            raise forms.ValidationError("Invalid stock value")
+
+        return value
     
     def clean_date_time(self):
         date_time = self.cleaned_data.get('date_time')

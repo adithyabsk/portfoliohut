@@ -5,7 +5,7 @@ from django.contrib.auth.decorators import login_required
 from django.contrib.auth.models import User
 from django.contrib.auth import authenticate, login, logout
 
-from .forms import LoginForm, RegisterForm, StockForm
+from .forms import LoginForm, RegisterForm, StockForm, CashForm
 from .models import *
 
 def index(request):
@@ -95,25 +95,40 @@ def validate_transaction(stock_data = None, cash_data = None):
 @login_required
 def transcation_input(request):
     if request.method == "GET":
-        return render(request, "portfoliohut/add_transaction.html", {'stock_form' : StockForm()})
+        return render(request, "portfoliohut/add_transaction.html", {'stock_form' : StockForm(), 'cash_form': CashForm()})
     
     context = {}
 
-    stock_form = StockForm(request.POST)
-    context['stock_form'] = stock_form
+    if(request.POST.get('submit_stock')):
+        stock_form = StockForm(request.POST)
+        context['stock_form'] = stock_form
 
-    #Check if the transaction data is valid
-    if not stock_form.is_valid():
-        return render(request, "portfoliohut/add_transaction.html", context)
+        #Check if the transaction data is valid
+        if ((not stock_form.is_valid()) or (transcation_input is False)):
+            return render(request, "portfoliohut/add_transaction.html", context)
 
-    #Create a stock object if it's validate_transaction
-    new_stock = Stock(profile = request.user.profile,
-                      action = stock_form.cleaned_data['action'],
-                      ticker = stock_form.cleaned_data['ticker'],
-                      date_time =stock_form.cleaned_data['date_time'],
-                      price = stock_form.cleaned_data['price'],
-                      quantity =stock_form.cleaned_data['quantity'])
+        #Create a stock object if it's validate_transaction
+        new_stock = Stock(profile = request.user.profile,
+                        action = stock_form.cleaned_data['action'],
+                        ticker = stock_form.cleaned_data['ticker'],
+                        date_time =stock_form.cleaned_data['date_time'],
+                        price = stock_form.cleaned_data['price'],
+                        quantity =stock_form.cleaned_data['quantity'])
 
-    new_stock.save()
+        new_stock.save()
+
+    if(request.POST.get('submit_cash')):
+        cash_form = CashForm(request.POST)
+        context['cash_form'] = cash_form
+
+        if not cash_form.is_valid():
+            return render(request, "portfoliohut/add_transaction.html", context)
+
+        new_transaction = CashBalance(profile= request.user.profile,
+                                    date_time = cash_form.cleaned_data['date_time'],
+                                    action=cash_form.cleaned_data['action'],
+                                    value = cash_form.cleaned_data['value'])
+        
+        new_transaction.save()
+
     return redirect(reverse('add_transaction'))
-    # return render(request, "portfoliohut/add_transaction.html", {'stock_form' : StockForm()})

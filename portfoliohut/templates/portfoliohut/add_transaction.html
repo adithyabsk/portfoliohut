@@ -11,17 +11,30 @@
       <h1 class="text-center" id="id_page_name">Add Transactions</h1>
     </div>
     <div class="row m-3 d-flex justify-content-center">
-      <div class="col-md-6">
+      <div class="col-md-6"> <h2>Add stock Transaction Details</h2>
         <form method = "POST">
           {% csrf_token %}
           <!-- TODO: Add the stock form here  -->
 
           <div class="row">
             {{stock_form}}
-          <button type="submit" class="btn btn-primary" id="id_post_button">Submit</button>
+          <button type="submit" class="btn btn-primary" id="id_stock_button" name = "submit_stock">Submit</button>
         </form>
       </div>
     </div>
+
+
+    <div class="row m-3 d-flex justify-content-center">
+        <div class="col-md-6"> <h2>Add Cash Transaction Details</h2>
+          <form method = "POST">
+            {% csrf_token %}
+            <!-- TODO: Add the stock form here  -->
+            <div class="row">
+              {{cash_form}}
+            <button type="submit" class="btn btn-primary" id="id_cash_button" name = "submit_cash">Submit</button>
+          </form>
+        </div>
+      </div>
     
       </div>
     </div>
