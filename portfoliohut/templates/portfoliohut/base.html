@@ -17,10 +17,10 @@
 
     <nav class="navbar navbar-light bg-light">
         <div class="container-fluid">
-            <a class="navbar-brand" href="/global-stream">[Thefacebook]</a>
-            {% url "global-stream" as global_stream_url %}
-            {% url "follower-stream" as follower_stream_url %}
-            {% url "profile" as profile_url %}
+            <a class="navbar-brand" href="/global-competition">[TheFacebook]</a>
+            {% url "global-competition" as global_competition_url %}
+            {% url "friends-competition" as follower_competition_url %}
+            {% url "profile-page" as profile_url %} <!-- Need to fix this. Can't do it this way anymore. -->
             {% url "login" as login_url %}
             {% url "logout" as logout_url %}
             {% url "register" as register_url %}
@@ -30,7 +30,7 @@
                 <a href="{{ login_url }}" id="id_login_link">Login</a>
             {# TODO: convert this to only if logged in #}
             {% elif request.user is not None %}
-                <a href="{{ profile_url }}" id="id_logged_in_user_name">{{ request.user.first_name|add:" "|add:request.user.last_name }}</a>
+                <a href="{% url 'profile-page' request.user.id %}">{{ request.user.get_full_name }}</a>
             {% endif %}
             <button class="navbar-toggler ms-auto" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav"
                     aria-controls="navbarNav" aria-expanded="false" aria-label="Toggle navigation" id="id_show_nav_button">
@@ -40,19 +40,19 @@
                 <ul class="navbar-nav">
                     {# Setup showing which page is active #}
                     <li class="nav-item">
-                        <a class="nav-link {% if global_stream_url in request.path %} active {%  endif %}"
-                           href="{{ global_stream_url }}" id="id_nav_global_stream">Global Stream</a>
+                        <a class="nav-link {% if global_competition_url in request.path %} active {% endif %}"
+                           href="{{ global_competition_url }}" id="id_nav_global_competition">Global Competition</a>
                     </li>
                     <li class="nav-item">
-                        <a class="nav-link {% if follower_stream_url in request.path %} active {%  endif %}"
-                           href="{{ follower_stream_url }}" id="id_nav_follower_stream">Follower Stream</a>
+                        <a class="nav-link {% if follower_competition_url in request.path %} active {% endif %}"
+                           href="{{ follower_competition_url }}" id="id_nav_friends_competition">Friends Competition</a>
+                    </li>
+                    <li class="nav-item"> <!-- I don't know why profile_url won't work here -->
+                        <a class="nav-link {% if 'profile-page' in request.path %} active {% endif %}"
+                           href="{% url 'profile-page' request.user.id %}" id="id_nav_profile">My Profile</a>
                     </li>
                     <li class="nav-item">
-                        <a class="nav-link {% if profile_url in request.path %} active {%  endif %}"
-                           href="{{ profile_url }}" id="id_nav_profile">My Profile</a>
-                    </li>
-                    <li class="nav-item">
-                        <a class="nav-link {% if not user.is_authenticated %} disabled {%  endif %}"\
+                        <a class="nav-link {% if not user.is_authenticated %} disabled {% endif %}"\
                            href="{{ logout_url }}" id="id_nav_logout">Logout</a>
                     </li>
                 </ul>
