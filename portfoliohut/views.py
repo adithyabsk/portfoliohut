@@ -115,5 +115,5 @@ def transcation_input(request):
                       quantity =stock_form.cleaned_data['quantity'])
 
     new_stock.save()
-
-    return render(request, "portfoliohut/add_transaction.html", {'stock_form' : StockForm()})
+    return redirect(reverse('add_transaction'))
+    # return render(request, "portfoliohut/add_transaction.html", {'stock_form' : StockForm()})

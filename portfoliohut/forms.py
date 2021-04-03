@@ -71,36 +71,26 @@ class StockForm(forms.ModelForm):
         cleaned_data = super().clean()
         return cleaned_data
     
-    # def clean_quantity(self):
-    #     quantity = self.cleaned_data['quantity']
-    #     if(quantity < 0):
-    #         raise forms.ValidationError("Invalid stock quantity")
+    def clean_quantity(self):
+        quantity = self.cleaned_data.get('quantity')
+        if(quantity < 0):
+            raise forms.ValidationError("Invalid stock quantity")
 
-    #     return quantity
+        return quantity
 
 
-    # def clean_price(self):
-    #     price = self.cleaned_data['price']
-    #     if(price < 0):
-    #         raise forms.ValidationError("Invalid stock price")
+    def clean_price(self):
+        price = self.cleaned_data.get('price')
+        if(price < 0):
+            raise forms.ValidationError("Invalid stock price")
 
-    #     return price
+        return price
+    
+    def clean_date_time(self):
+        date_time = self.cleaned_data.get('date_time')
+        if date_time > timezone.now():
+            raise forms.ValidationError("Invalid date")
+        return date_time
 
-    # def clean_action(self):
-    #     action = self.cleaned_data.get['action']
-    #     if action != 'BUY' and action != 'SELL':
-    #         raise forms.ValidationError("Invalid transaction type")
-    #     return action
-
-    # def clean_date_time(self):
-    #     date_time = self.cleaned_data['date_time']
-    #     if date_time > timezone.now():
-    #         raise forms.ValidationError("Invalid date")
-    #     return date_time
-
-    # def clean_ticker(self):
-    #     # Can we check to make sure the ticker is valid using Yahoo Finance?
-    #     ticker = self.cleaned_data['ticker']
-    #     return ticker
 
 
