@@ -2,7 +2,7 @@
 
 from django.urls import path
 
-from .views import index, login_action, register_action, global_stream, follower_stream, profile, logout_action
+from .views import index, login_action, register_action, global_stream, follower_stream, profile, logout_action, transcation_input
 
 urlpatterns = [
     path("", index, name="index"),
@@ -12,4 +12,5 @@ urlpatterns = [
     path("global-stream", global_stream, name="global-stream"),
     path("follower-stream", follower_stream, name="follower-stream"),
     path("profile", profile, name="profile"),
+    path("add_transaction", transcation_input, name="add_transaction"),
 ]

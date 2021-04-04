@@ -3,7 +3,7 @@ from django import forms
 from django.utils import timezone
 from django.contrib.auth import authenticate
 from django.contrib.auth.models import User
-from portfoliohut.models import Stock
+from portfoliohut.models import Stock, CashBalance
 
 class LoginForm(forms.Form):
     """Validate login registration details."""
@@ -49,6 +49,8 @@ class RegisterForm(forms.Form):
 
         return username
 
+class CSVForm(forms.Form):
+    file = forms.FileField(allow_empty_file=True)
 class StockForm(forms.ModelForm):
     class Meta:
         model = Stock
@@ -66,22 +68,63 @@ class StockForm(forms.ModelForm):
             'price': 'Price at Time of Transaction',
             'quantity': 'Number of Shares'
         }
-    
-    def clean_action(self):
-        action = self.cleaned_data.get('action')
-        if action != 'BUY' and action != 'SELL':
-            raise forms.ValidationError("Invalid transaction type")
-        return action
 
+    def clean(self):
+        cleaned_data = super().clean()
+        return cleaned_data
+    
+    def clean_quantity(self):
+        quantity = self.cleaned_data.get('quantity')
+        if(quantity < 0):
+            raise forms.ValidationError("Invalid stock quantity")
+
+        return quantity
+
+
+    def clean_price(self):
+        price = self.cleaned_data.get('price')
+        if(price < 0):
+            raise forms.ValidationError("Invalid stock price")
+
+        return price
+    
     def clean_date_time(self):
-        date_time = self.cleaned_data['date_time']
+        date_time = self.cleaned_data.get('date_time')
         if date_time > timezone.now():
             raise forms.ValidationError("Invalid date")
         return date_time
 
-    def clean_ticker(self):
-        # Can we check to make sure the ticker is valid using Yahoo Finance?
-        ticker = self.cleaned_data['ticker']
-        return ticker
+
+class CashForm(forms.ModelForm):
+    class Meta:
+        model = CashBalance
+        fields = {
+            'action',
+            'date_time',
+            'value',
+        }
+        labels = {
+            'action': 'Trasnaction Type',
+            'date_time': 'Date and Time of Transaction',
+            'value': 'Dollar Amount',
+        }
+
+    def clean(self):
+        cleaned_data = super().clean()
+        return cleaned_data
+    
+    def clean_value(self):
+        value = self.cleaned_data.get('value')
+        if(value < 0):
+            raise forms.ValidationError("Invalid stock value")
+
+        return value
+    
+    def clean_date_time(self):
+        date_time = self.cleaned_data.get('date_time')
+        if date_time > timezone.now():
+            raise forms.ValidationError("Invalid date")
+        return date_time
+
 
 

@@ -1,12 +1,17 @@
 from django.shortcuts import render, redirect
 from django.urls import reverse
 
+from django.contrib.messages import constants as messages
 from django.contrib.auth.decorators import login_required
 from django.contrib.auth.models import User
 from django.contrib.auth import authenticate, login, logout
 
-from .forms import LoginForm, RegisterForm
+from .forms import LoginForm, RegisterForm, StockForm, CashForm, CSVForm
+from .models import *
 
+from datetime import datetime
+import csv
+import pandas as pd
 
 def index(request):
     if request.user.is_authenticated:
@@ -61,6 +66,9 @@ def register_action(request):
     new_user = authenticate(username=register_form.cleaned_data['username'],
                             password=register_form.cleaned_data['password'])
 
+    new_profile = Profile(user = new_user, bio = "Hello World")
+    new_profile.save()
+
     login(request, new_user)
     return redirect(reverse('index'))
 
@@ -81,3 +89,94 @@ def profile(request):
         return render(request, "portfoliohut/profile.html", {"self_user": False})
     else:
         return render(request, "portfoliohut/profile.html", {"self_user": True})
+
+
+@login_required
+def validate_transaction(stock_data = None, cash_data = None):
+    #TODO: check the transaction given some form data, return true or false
+    
+    return True
+
+
+def validate_csv(date, ticker, price, quantity, action):
+    #TODO
+    pass
+
+
+
+def add_data_from_csv(request,file):
+    try:
+        if not file.name.endswith('.csv'):
+            messages.error(request,'File is not a CSV file')
+            return
+
+        decoded_file = file.read().decode('utf-8').splitlines()
+        reader = csv.DictReader(decoded_file)
+        for row in reader:
+            date = (datetime.strptime(row["DATE"], '%m/%d/%Y').date())
+            action = 'BUY' if float(row["AMOUNT"]) < 0 else 'SELL'
+            ticker = row["SYMBOL"]
+            price = row["PRICE"]
+            quantity = row["QUANTITY"]
+            print(action)
+            print(quantity)
+            if(validate_csv(date, ticker, price, quantity, action)):
+                new_stock = Stock(profile = request.user.profile,
+                        action = action,
+                        ticker = ticker,
+                        date_time =date,
+                        price = price,
+                        quantity = quantity)
+
+                new_stock.save()
+    
+    except:
+        return
+
+@login_required
+def transcation_input(request):
+    if request.method == "GET":
+        return render(request, "portfoliohut/add_transaction.html", {'stock_form' : StockForm(), 'cash_form': CashForm(), 'csv_form':CSVForm()})
+    
+    context = {}
+
+    if(request.POST.get('submit_stock')):
+        stock_form = StockForm(request.POST)
+        context['stock_form'] = stock_form
+
+        #Check if the transaction data is valid
+        if ((not stock_form.is_valid()) or (transcation_input is False)):
+            return render(request, "portfoliohut/add_transaction.html", context)
+
+        #Create a stock object if it's validate_transaction
+        new_stock = Stock(profile = request.user.profile,
+                        action = stock_form.cleaned_data['action'],
+                        ticker = stock_form.cleaned_data['ticker'],
+                        date_time =stock_form.cleaned_data['date_time'],
+                        price = stock_form.cleaned_data['price'],
+                        quantity =stock_form.cleaned_data['quantity'])
+
+        new_stock.save()
+
+    if('submit_csv' in request.POST):
+        csv_form = CSVForm(request.POST, request.FILES)
+        context['csv_form'] = csv_form
+        if csv_form.is_valid():
+            add_data_from_csv(request, request.FILES['file'])
+    
+
+    if(request.POST.get('submit_cash')):
+        cash_form = CashForm(request.POST)
+        context['cash_form'] = cash_form
+
+        if not cash_form.is_valid():
+            return render(request, "portfoliohut/add_transaction.html", context)
+
+        new_transaction = CashBalance(profile= request.user.profile,
+                                    date_time = cash_form.cleaned_data['date_time'],
+                                    action=cash_form.cleaned_data['action'],
+                                    value = cash_form.cleaned_data['value'])
+        
+        new_transaction.save()
+
+    return redirect(reverse('add_transaction'))
