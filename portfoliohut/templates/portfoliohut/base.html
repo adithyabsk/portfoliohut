@@ -15,6 +15,7 @@
     {% block head %}
     {% endblock head %}
 
+
     <nav class="navbar navbar-light bg-light">
         <div class="container-fluid">
             <a class="navbar-brand" href="/global-competition">[TheFacebook]</a>
@@ -29,13 +30,21 @@
             {% elif register_url == request.path %}
                 <a href="{{ login_url }}" id="id_login_link">Login</a>
             {# TODO: convert this to only if logged in #}
+            {% if request.user is not None %}
+
             {% elif request.user is not None %}
                 <a href="{% url 'profile-page' request.user.id %}">{{ request.user.get_full_name }}</a>
             {% endif %}
+
+
+            {% if request.user.id is not None %}
+
             <button class="navbar-toggler ms-auto" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav"
                     aria-controls="navbarNav" aria-expanded="false" aria-label="Toggle navigation" id="id_show_nav_button">
                 <span class="navbar-toggler-icon"></span>
             </button>
+
+
             <div class="collapse navbar-collapse" id="navbarNav">
                 <ul class="navbar-nav">
                     {# Setup showing which page is active #}
@@ -47,10 +56,13 @@
                         <a class="nav-link {% if follower_competition_url in request.path %} active {% endif %}"
                            href="{{ follower_competition_url }}" id="id_nav_friends_competition">Friends Competition</a>
                     </li>
+                    {% if request.user.id is not None %}
                     <li class="nav-item"> <!-- I don't know why profile_url won't work here -->
                         <a class="nav-link {% if 'profile-page' in request.path %} active {% endif %}"
                            href="{% url 'profile-page' request.user.id %}" id="id_nav_profile">My Profile</a>
                     </li>
+                    {% endif %}
+
                     <li class="nav-item">
                         <a class="nav-link {% if not user.is_authenticated %} disabled {% endif %}"\
                            href="{{ logout_url }}" id="id_nav_logout">Logout</a>
@@ -58,7 +70,11 @@
                 </ul>
             </div>
         </div>
+        {% endif %}
     </nav>
+
+{% endif %}
+
 
 </head>
 <body>

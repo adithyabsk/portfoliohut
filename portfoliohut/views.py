@@ -70,8 +70,8 @@ def register_action(request):
     new_user = authenticate(username=register_form.cleaned_data['username'],
                             password=register_form.cleaned_data['password'])
 
-    new_profile = Profile(user = new_user)
-    new_profile.save()
+    # new_profile = Profile(user = new_user)
+    # new_profile.save()
 
     login(request, new_user)
     return redirect(reverse('index'))
