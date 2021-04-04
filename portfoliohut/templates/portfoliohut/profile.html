@@ -5,55 +5,74 @@
 
 {% block content %}
   <div class="container">
+
+    <!-- Page Title -->
     <div class="row mt-4 mb-2">
-      <h1 class="text-center" id="id_page_name">Profile Page for
-        {% if self_user %}
-          {{ request.user.first_name|add:" "|add:request.user.last_name }}
-        {% else %}
-          Someone Else
-        {% endif %}
-      </h1>
+      <h1 class="text-center">Profile</h1>
+      <h2 class="text-center">{{ profile.user.username }}</h2>
     </div>
-    <div class="row m-2">
-      <div class="text-center m-2">
-        <img id="id_user_picture" src="https://www.adithyabalaji.com/images/headshot.png" alt="Adithya's Profile Picture" style="width:250px;height:100%;">
-      </div>
-    </div>
-    {% if self_user %}
+
+    <!-- Logged In User -->
+    {% if request.user.id == profile.user.id %}
+
+      <!-- % Returns -->
+      <!-- option to make public or private -->
+      
+      <!-- Bio -->
       <div class="row m-3">
-          <form>
-            {% csrf_token %}
-            <div class="row mb-3">
-              <label for="id_profile_picture" class="col-sm-2 col-form-label">Profile Picture: </label>
-              <div class="col-sm-10">
-                <input type="file" class="form-control" id="id_profile_picture">
-              </div>
-              <textarea class="m-2" id="id_bio_input_text" rows="3">
-                {{ request.user.first_name|add:" "|add:request.user.last_name }} is a masters student at Carnegie Mellon University.
-              </textarea>
-            </div>
-            <button type="submit" class="btn btn-primary" id="id_post_button">Submit</button>
-          </form>
+        <form enctype="multipart/form-data" action="{% url 'update-profile' %}" method="post">
+          {% csrf_token %}
+          <div class="row mb-3">
+            <textarea>{{ profile.user.bio }}</textarea>
+          </div>
+          <button type="submit" class="btn btn-primary">Submit</button>
+        </form>
       </div>
+
+      <!-- Top 5 Stocks -->
+      <!-- images -->
+
+      <!-- Friends -->
       <div class="row m-3">
-        <ul>
-          <li>You are following:
-            <ul>
-              <li><a href="/profile?user" id="id_profile_link_1">Farnam Janian</a></li>
-              <li><a href="/profile?user" id="id_profile_link_2">Barack Obama</a></li>
-              <li><a href="/profile?user" id="id_profile_link_3">Donald Trump</a></li>
-            </ul>
-          </li>
+		    <ul>
+          <span>Friends</span>
+          <ul>
+            <li><a href="{% url 'profile-page' 1 %}">username1</a></li>
+            {% for friend in profile.friends.all %}
+              <li><a href="{% url 'profile-page' friend.id %}" class="friend">{{ friend.username }}</a></li>
+            {% endfor %}
+          </ul>
         </ul>
       </div>
-    {% else %}
+
+      <!-- Pending Friend Requests -->
       <div class="row m-3">
-        <textarea readonly class="m-2" id="id_user_bio" rows="3">
-          {{ request.user.first_name|add:" "|add:request.user.last_name }} is a masters student at Carnegie Mellon
-          University.
-        </textarea>
-        <button type="submit" class="btn btn-primary" id="id_unfollow">Unfollow</button>
+        <ul>
+          <span>Pending Friend Requests</span>
+            <ul>
+              <li>
+                <a href="{% url 'profile-page' 2 %}">username2</a>
+                <button class="btn btn-primary">Accept</button>
+                <button class="btn btn-primary">Decline</button>
+              </li>
+              {% for friend in profile.friend_requests.all %}
+                <li><a href="{% url 'profile-page' friend_request.id %}" class="friend">{{ friend_request.username }}</a></li>
+              {% endfor %}
+            </ul>
+        </ul>
       </div>
+    
+    <!-- Friend of Logged In User -->
+    <!-- Other User -->
+    {% else %}
+      <!-- Bio -->
+      <div class="row mb-3">
+        <textarea class="m-2" rows="2">{{ profile.user.bio }}</textarea>
+      </div>
+
+      <!-- Top 5 Stocks -->
+      <!-- images -->
     {% endif %}
+  
   </div>
 {% endblock content %}

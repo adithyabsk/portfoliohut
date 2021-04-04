@@ -3,7 +3,8 @@ from django import forms
 from django.utils import timezone
 from django.contrib.auth import authenticate
 from django.contrib.auth.models import User
-from portfoliohut.models import Stock, CashBalance
+from portfoliohut.models import *
+
 
 class LoginForm(forms.Form):
     """Validate login registration details."""
@@ -20,7 +21,6 @@ class LoginForm(forms.Form):
             raise forms.ValidationError("Invalid username password combination.")
 
         return cleaned_data
-
 
 class RegisterForm(forms.Form):
     """Validate registration details."""
@@ -127,4 +127,13 @@ class CashForm(forms.ModelForm):
         return date_time
 
 
+class ProfileForm(forms.ModelForm):
+    class Meta:
+        model = Profile
+        fields = {
+            'bio',
+        }
+        widgets = {
+            'bio': forms.Textarea(),
+        }
 

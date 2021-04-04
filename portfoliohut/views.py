@@ -6,7 +6,8 @@ from django.contrib.auth.decorators import login_required
 from django.contrib.auth.models import User
 from django.contrib.auth import authenticate, login, logout
 
-from .forms import LoginForm, RegisterForm, StockForm, CashForm, CSVForm
+
+from .forms import *
 from .models import *
 
 from datetime import datetime
@@ -15,7 +16,7 @@ import pandas as pd
 
 def index(request):
     if request.user.is_authenticated:
-        return redirect(reverse('global-stream'))
+        return redirect(reverse('global-competition'))
     else:
         return redirect(reverse('login'))
 
@@ -26,7 +27,7 @@ def login_action(request):
 
     login_form = LoginForm(request.POST)
 
-    # Validates the form.
+    # Validates form
     if not login_form.is_valid():
         return render(request, 'portfoliohut/login.html', {"login_form": login_form})
 
@@ -55,7 +56,7 @@ def register_action(request):
     if not register_form.is_valid():
         return render(request, 'portfoliohut/register.html', context)
 
-    # Create user since the form is valid.
+    # Create user since the form is valid
     new_user = User.objects.create_user(username=register_form.cleaned_data['username'],
                                         password=register_form.cleaned_data['password'],
                                         email=register_form.cleaned_data['email'],
@@ -63,10 +64,13 @@ def register_action(request):
                                         last_name=register_form.cleaned_data['last_name'])
     new_user.save()
 
+    profile = Profile.objects.create(user=new_user)
+    profile.save()
+
     new_user = authenticate(username=register_form.cleaned_data['username'],
                             password=register_form.cleaned_data['password'])
 
-    new_profile = Profile(user = new_user, bio = "Hello World")
+    new_profile = Profile(user = new_user)
     new_profile.save()
 
     login(request, new_user)
@@ -74,22 +78,62 @@ def register_action(request):
 
 
 @login_required
-def global_stream(request):
-    return render(request, "portfoliohut/stream.html", {"page_name": "Global Stream"})
+def global_competition(request):
+    context = {}
+    profiles = Profile.objects.all()
+    context['profiles'] = profiles
+    context['page_name'] = 'Global Competition'
+    return render(request, "portfoliohut/stream.html", context)
 
 
 @login_required
-def follower_stream(request):
-    return render(request, "portfoliohut/stream.html", {"page_name": "Follower Stream"})
+def friends_competition(request):
+    context = {}
+    context['page_name'] = 'Friends Competition'
+    return render(request, "portfoliohut/stream.html", context)
 
 
 @login_required
-def profile(request):
-    if request.method == 'GET' and request.GET.get("user") is not None:
-        return render(request, "portfoliohut/profile.html", {"self_user": False})
-    else:
-        return render(request, "portfoliohut/profile.html", {"self_user": True})
+def profile_page(request, id_num):
+    context = {}
+    
+    profile_exists = Profile.objects.filter(id=id_num)
+    if not profile_exists:
+        return redirect('index')
+    
+    context['profile'] = Profile.objects.get(id=id_num)
+    return render(request, "portfoliohut/profile.html", context)
 
+
+@login_required
+def update_profile(request):
+    context = {}
+
+    if request.method == 'GET':
+        return redirect('profile-page', id_num=request.user.id)
+    
+    profile = Profile.objects.get(user=request.user)
+    
+    if request.method == 'POST':
+        profile_form = ProfileForm(request.POST, request.FILES, instance=profile)
+        print(profile_form)
+        
+        if not profile_form.is_valid():
+            print("Form is not valid")
+            context['profile_form'] = profile_form
+            context['profile'] = profile
+            context['message'] = "Form not valid"
+            return render(request, 'portfoliohut/profile.html', context) # NEED TO FIX THIS
+    
+        #profile.profile_picture = profile_form.cleaned_data['profile_picture']
+        #profile.content_type = profile_form.cleaned_data['profile_picture'].content_type
+        profile.bio = profile_form.cleaned_data['bio']
+        profile.save()
+        
+        context['profile_form'] = profile_form
+        context['profile'] = profile
+        
+        return render(request, 'portfoliohut/profile.html', context) # NEED TO FIX THIS
 
 @login_required
 def validate_transaction(stock_data = None, cash_data = None):
@@ -145,7 +189,7 @@ def transcation_input(request):
         context['stock_form'] = stock_form
 
         #Check if the transaction data is valid
-        if ((not stock_form.is_valid()) or (transcation_input is False)):
+        if ((not stock_form.is_valid()) or (validate_transaction is False)):
             return render(request, "portfoliohut/add_transaction.html", context)
 
         #Create a stock object if it's validate_transaction
