@@ -20,7 +20,7 @@
       
       <!-- Bio -->
       <div class="row m-3">
-        <form>
+        <form enctype="multipart/form-data" action="{% url 'update-profile' %}" method="post">
           {% csrf_token %}
           <div class="row mb-3">
             <textarea>{{ profile.user.bio }}</textarea>
@@ -39,7 +39,7 @@
           <ul>
             <li><a href="{% url 'profile-page' 1 %}">username1</a></li>
             {% for friend in profile.friends.all %}
-              <li><a href="{% url 'profile-page' friend.id %}" class="friend">{{friend.username}}</a></li>
+              <li><a href="{% url 'profile-page' friend.id %}" class="friend">{{ friend.username }}</a></li>
             {% endfor %}
           </ul>
         </ul>
@@ -56,7 +56,7 @@
                 <button class="btn btn-primary">Decline</button>
               </li>
               {% for friend in profile.friend_requests.all %}
-                <li><a href="{% url 'profile-page' friend_request.id %}" class="friend">{{friend.get_full_name}}</a></li>
+                <li><a href="{% url 'profile-page' friend_request.id %}" class="friend">{{ friend_request.username }}</a></li>
               {% endfor %}
             </ul>
         </ul>

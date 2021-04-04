@@ -11,7 +11,7 @@ from portfoliohut.models import Profile
 
 def index(request):
     if request.user.is_authenticated:
-        return redirect(reverse('global-stream'))
+        return redirect(reverse('global-competition'))
     else:
         return redirect(reverse('login'))
 
@@ -22,7 +22,7 @@ def login_action(request):
 
     login_form = LoginForm(request.POST)
 
-    # Validates the form.
+    # Validates form
     if not login_form.is_valid():
         return render(request, 'portfoliohut/login.html', {"login_form": login_form})
 
@@ -51,7 +51,7 @@ def register_action(request):
     if not register_form.is_valid():
         return render(request, 'portfoliohut/register.html', context)
 
-    # Create user since the form is valid.
+    # Create user since the form is valid
     new_user = User.objects.create_user(username=register_form.cleaned_data['username'],
                                         password=register_form.cleaned_data['password'],
                                         email=register_form.cleaned_data['email'],
@@ -70,7 +70,7 @@ def register_action(request):
 
 
 @login_required
-def global_stream(request):
+def global_competition(request):
     context = {}
     profiles = Profile.objects.all()
     context['profiles'] = profiles
@@ -79,7 +79,7 @@ def global_stream(request):
 
 
 @login_required
-def follower_stream(request):
+def friends_competition(request):
     context = {}
     context['page_name'] = 'Friends Competition'
     return render(request, "portfoliohut/stream.html", context)
@@ -94,6 +94,35 @@ def profile_page(request, id_num):
         return redirect('index')
     
     context['profile'] = Profile.objects.get(id=id_num)
-    context['logged_in_user'] = Profile.objects.get(user=request.user)
-
     return render(request, "portfoliohut/profile.html", context)
+
+
+@login_required
+def update_profile(request):
+    context = {}
+
+    if request.method == 'GET':
+        return redirect('profile-page', id_num=request.user.id)
+    
+    profile = Profile.objects.get(user=request.user)
+    
+    if request.method == 'POST':
+        profile_form = ProfileForm(request.POST, request.FILES, instance=profile)
+        print(profile_form)
+        
+        if not profile_form.is_valid():
+            print("Form is not valid")
+            context['profile_form'] = profile_form
+            context['profile'] = profile
+            context['message'] = "Form not valid"
+            return render(request, 'portfoliohut/profile.html', context) # NEED TO FIX THIS
+    
+        #profile.profile_picture = profile_form.cleaned_data['profile_picture']
+        #profile.content_type = profile_form.cleaned_data['profile_picture'].content_type
+        profile.bio = profile_form.cleaned_data['bio']
+        profile.save()
+        
+        context['profile_form'] = profile_form
+        context['profile'] = profile
+        
+        return render(request, 'portfoliohut/profile.html', context) # NEED TO FIX THIS
