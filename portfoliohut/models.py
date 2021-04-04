@@ -14,6 +14,7 @@ CASH_BALANCE_ACTIONS = (
 class Profile(models.Model):
     user = models.OneToOneField(User, on_delete=models.PROTECT)
     bio = models.CharField(max_length=240, default="Hello! I'm new to Portfolio Hut.")
+
     friends = models.ManyToManyField("Profile", blank=True, related_name='friends_list')
     friend_requests = models.ManyToManyField("Profile", blank=True, related_name='friend_requests_list')
 
