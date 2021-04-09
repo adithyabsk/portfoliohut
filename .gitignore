@@ -138,7 +138,6 @@ dmypy.json
 cython_debug/
 
 # Custom
-migrations
 .idea/*
 *.pdf
 .DS_Store

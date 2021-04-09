@@ -3,8 +3,7 @@ from django.urls import reverse
 
 from django.contrib.messages import constants as messages
 from django.contrib.auth.decorators import login_required
-from django.contrib.auth.models import User
-from django.contrib.auth import authenticate, login, logout
+from django.contrib.auth import login, logout
 
 
 from .forms import *
@@ -12,7 +11,7 @@ from .models import *
 
 from datetime import datetime
 import csv
-import pandas as pd
+
 
 def index(request):
     if request.user.is_authenticated:

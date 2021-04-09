@@ -11,6 +11,7 @@ CASH_BALANCE_ACTIONS = (
     ("deposit", "DEPOSIT")
 )
 
+
 class Profile(models.Model):
     user = models.OneToOneField(User, on_delete=models.PROTECT)
     bio = models.CharField(max_length=240, default="Hello! I'm new to Portfolio Hut.")
@@ -19,7 +20,7 @@ class Profile(models.Model):
     friend_requests = models.ManyToManyField("Profile", blank=True, related_name='friend_requests_list')
 
     def __str__(self):
-        return "Investor: " + self.user.get_full_name()
+        return f"user={self.user.get_full_name()}"
 
 
 class CashBalance(models.Model):
@@ -29,8 +30,10 @@ class CashBalance(models.Model):
     value = models.DecimalField(max_digits=100, decimal_places=2)
 
     def __str__(self):
-        return "Profile: " + self.profile.user.get_full_name() + \
-               "\nValue: " + self.value
+        return (
+            f"profile={self.profile.user.get_full_name()}, value={self.value}, "
+            f"date_time={self.date_time}"
+        )
 
 
 class Stock(models.Model):
@@ -42,9 +45,7 @@ class Stock(models.Model):
     quantity = models.IntegerField()
 
     def __str__(self):
-        return "Profile: " + self.profile.user.get_full_name() + \
-               "\nAction: " + self.action + \
-               "\nTicker: " + self.ticker + \
-               "\nDate and Time: " + self.date_time + \
-               "\nPrice: " + self.price + \
-               "\nQuantity: " + self.quantity
+        return (
+            f"ticker={self.ticker}, profile={self.profile.user.get_full_name()}, "
+            f"date_time={self.date_time}"
+        )
