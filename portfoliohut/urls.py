@@ -16,4 +16,5 @@ urlpatterns = [
     path("profile-page/<int:id_num>", profile_page, name="profile-page"),
     path("update-profile", update_profile, name="update-profile"),
     path("add_transaction", transcation_input, name="add_transaction"),
+    path("returns-profile", return_profile, name="returns-profile")
 ]

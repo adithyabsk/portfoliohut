@@ -1,0 +1,5 @@
+{
+  "dependencies": {
+    "react-stockcharts": "^0.7.8"
+  }
+}
