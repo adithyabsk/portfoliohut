@@ -224,3 +224,8 @@ def transcation_input(request):
         new_transaction.save()
 
     return redirect(reverse('add_transaction'))
+
+
+@login_required
+def return_profile(request):
+    return render(request, "portfoliohut/portfolio_profile.html",{})
