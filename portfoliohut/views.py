@@ -1,4 +1,4 @@
-from django.shortcuts import render, redirect
+from django.shortcuts import render, redirect, get_object_or_404, get_list_or_404
 from django.urls import reverse
 
 from django.contrib.messages import constants as messages
@@ -10,7 +10,10 @@ from .forms import *
 from .models import *
 
 from datetime import datetime
+from collections import defaultdict
+
 import csv
+import yfinance as yf
 
 
 def index(request):
@@ -143,7 +146,7 @@ def validate_transaction(stock_data = None, cash_data = None):
 
 def validate_csv(date, ticker, price, quantity, action):
     #TODO
-    pass
+    return True
 
 
 
@@ -161,8 +164,7 @@ def add_data_from_csv(request,file):
             ticker = row["SYMBOL"]
             price = row["PRICE"]
             quantity = row["QUANTITY"]
-            print(action)
-            print(quantity)
+        
             if(validate_csv(date, ticker, price, quantity, action)):
                 new_stock = Stock(profile = request.user.profile,
                         action = action,
@@ -183,7 +185,10 @@ def transcation_input(request):
     
     context = {}
 
-    if(request.POST.get('submit_stock')):
+    for item in request.POST:
+        print(item)
+
+    if('submit_stock' in request.POST):
         stock_form = StockForm(request.POST)
         context['stock_form'] = stock_form
 
@@ -195,7 +200,7 @@ def transcation_input(request):
         new_stock = Stock(profile = request.user.profile,
                         action = stock_form.cleaned_data['action'],
                         ticker = stock_form.cleaned_data['ticker'],
-                        date_time =stock_form.cleaned_data['date_time'],
+                        date_time = stock_form.cleaned_data['date_time'],
                         price = stock_form.cleaned_data['price'],
                         quantity =stock_form.cleaned_data['quantity'])
 
@@ -208,7 +213,7 @@ def transcation_input(request):
             add_data_from_csv(request, request.FILES['file'])
     
 
-    if(request.POST.get('submit_cash')):
+    if('submit_cash' in request.POST):
         cash_form = CashForm(request.POST)
         context['cash_form'] = cash_form
 
@@ -225,6 +230,63 @@ def transcation_input(request):
     return redirect(reverse('add_transaction'))
 
 
+def get_current_prices(stock_map):
+    '''
+    Lookup the current price using yfinance and then return a dictionary with 
+    current prices of the stock.
+    '''
+    total = 0
+    result = []
+    for k,v in stock_map.items():
+        if(v > 0):
+            ticker_details = []
+            ticker_details.append(k)
+            ticker_price = yf.Ticker(k)
+            ticker_details.append(ticker_price.info['bid'])
+            stock_value = ((ticker_price.info['bid'] * v))
+            total += stock_value
+            ticker_details.append(round(stock_value,2))
+            result.append(ticker_details)
+
+        else:
+            continue
+
+    
+    return result, total
+
+
 @login_required
 def return_profile(request):
-    return render(request, "portfoliohut/portfolio_profile.html",{})
+    if(request.method == 'GET'):
+        stock_map = defaultdict(int)
+        #Query the database
+        profile = get_object_or_404(Profile, user=request.user)
+        all_stock_transactions = get_list_or_404(Stock, profile=profile)
+        for transaction in all_stock_transactions:
+            if(transaction.action.upper() == "BUY"):
+                stock_map[transaction.ticker] += transaction.quantity
+            else:
+                stock_map[transaction.ticker] -= transaction.quantity
+
+        
+        all_cash_transactions = get_list_or_404(CashBalance, profile=profile)
+        cash_balance = 0
+        for transaction in all_cash_transactions:
+            if(transaction.action.upper() == "DEPOSIT"):
+                cash_balance += transaction.value
+            else:
+                cash_balance -= transaction.value
+
+        stocks, total  = get_current_prices(stock_map)
+        stocks.append(["Cash", "--", cash_balance])
+
+
+        #Write logic for pagination and transactions table
+
+
+        return render(request, "portfoliohut/portfolio_profile.html",{'profile_table': stocks,'total':total})
+    
+    '''
+    Call Yahoo finance for all the stocks that are present in the user's portfolio
+    Call all the transactions of the current user profile.
+    '''
