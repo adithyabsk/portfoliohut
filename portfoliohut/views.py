@@ -278,13 +278,15 @@ def return_profile(request):
                 cash_balance -= transaction.value
 
         stocks, total  = get_current_prices(stock_map)
-        stocks.append(["Cash", "--", cash_balance])
+        # stocks.append(["Cash", "--", cash_balance])
 
 
         #Write logic for pagination and transactions table
+        stock_transactions_table = Stock.objects.filter(profile = profile).order_by('date_time')
+        table = StockTable(stock_transactions_table)
+        table.paginate(page=request.GET.get("page", 1), per_page=25)
 
-
-        return render(request, "portfoliohut/portfolio_profile.html",{'profile_table': stocks,'total':total})
+        return render(request, "portfoliohut/portfolio_profile.html",{'profile_table': stocks,'total':"${:,.2f}".format(total),'table':table, 'cash':"${:,.2f}".format(cash_balance)})
     
     '''
     Call Yahoo finance for all the stocks that are present in the user's portfolio

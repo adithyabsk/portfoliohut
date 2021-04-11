@@ -2,6 +2,9 @@
 {% block head %}
     <title>Profile</title>
 {% endblock head %}
+{% load render_table from django_tables2 %}
+
+<link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/css/bootstrap.min.css" />
 
 {% block content %}
   <div class="container">
@@ -41,13 +44,13 @@
           crosshair: {
             enabled: true,
             snapToDataPoint: true,
-            valueFormatString: "$#,###.00M",
+            valueFormatString: "%##.##",
           }
         },
         data: [{
           type: "line",
           xValueFormatString: "MMM YYYY",
-          yValueFormatString: "$#,###.##M",
+          yValueFormatString: "%##.##",
           dataPoints : dataPoints
         }]
       }],
@@ -56,7 +59,7 @@
   
   d3.csv("/static/portfoliohut/data/test_transactions.csv", function(data) {
       for (var i = 0; i < data.length; i++) {
-          dataPoints.push({x: new Date(data[i].DATE), y: Number(data[i].Returns)});
+          dataPoints.push({x: new Date(data[i].DATE), y: Number(data[i].Returns)/100});
           console.log(data[i].DATE);
           console.log(data[i].Returns);
       }
@@ -75,7 +78,7 @@ TODO: Add portfolio Table  -->
 <br>
 <br>
 <div name = "Profile Table" style= "margin:auto; margin-top:2.5em" >
-  <h4>Current Portfolio Summary</h4>
+  <h4 style="margin:center; text-align:center;">Current Portfolio Summary</h4>
 
   <table class="table table-hover">
     <thead>
@@ -97,9 +100,16 @@ TODO: Add portfolio Table  -->
       {% endfor %}
     </tbody>
   </table>
-  <h4>Total Portfolio Value(USD): {{total}}</h4>
+  <h5>Total Portfolio Value(USD): {{total}}</h5>
 
-
+  <br>
+  <h5>Total Cash Balance is: {{cash}}</h5>
+<br>
+<br>
+<h4 style="text-align:center">Transaction History</h4>
+<div name = "transactions table" style="margin-top:.75em">
+</div>
+{% render_table table %}
 
 </div>
 

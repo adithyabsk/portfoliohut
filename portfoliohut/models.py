@@ -1,6 +1,8 @@
 from django.db import models
 from django.contrib.auth.models import User
 
+import django_tables2 as tables
+
 STOCK_ACTIONS = (
     ("buy", "BUY"),
     ("sell", "SELL"),
@@ -49,3 +51,12 @@ class Stock(models.Model):
             f"ticker={self.ticker}, profile={self.profile.user.get_full_name()}, "
             f"date_time={self.date_time}"
         )
+
+
+class StockTable(tables.Table):
+    class Meta:
+        model = Stock
+        sequence = ("action", "ticker", "price", "quantity", "date_time",)
+        exclude = ("profile","id", )
+        attrs = {'width': '160%'}
+
