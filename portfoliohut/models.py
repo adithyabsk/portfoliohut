@@ -1,11 +1,10 @@
-import django_tables2 as tables
 from collections import defaultdict
 from typing import Optional
 
+import django_tables2 as tables
 import numpy as np
 import pandas as pd
 import yfinance as yf
-
 from django.contrib.auth.models import User
 from django.db import models
 from django.db.models import QuerySet
