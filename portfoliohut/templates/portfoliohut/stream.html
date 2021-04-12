@@ -10,7 +10,7 @@
     <div class="row mt-5">
       <h1 class="text-center" id="id_page_name">{{ page_name }}</h1>
     </div>
-    
+
     {% for profile in profiles %}
       <div class="row mb-3">
         <a href="{% url 'profile-page' profile.user.id %}">
@@ -18,6 +18,6 @@
         </a>
       </div><br/>
     {% endfor %}
-  
+
 </div>
 {% endblock content %}

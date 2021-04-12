@@ -54,9 +54,9 @@
           dataPoints : dataPoints
         }]
       }],
-      
+
     });
-  
+
   d3.csv("/static/portfoliohut/data/test_transactions.csv", function(data) {
       for (var i = 0; i < data.length; i++) {
           dataPoints.push({x: new Date(data[i].DATE), y: Number(data[i].Returns)/100});
@@ -64,7 +64,7 @@
           console.log(data[i].Returns);
       }
       stockChart.render();
-  
+
   });
   }
 </script>

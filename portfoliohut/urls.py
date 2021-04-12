@@ -2,9 +2,18 @@
 
 from django.urls import path
 
-
-from .views import *
-
+from portfoliohut.views import (
+    friends_competition,
+    global_competition,
+    index,
+    login_action,
+    logout_action,
+    profile_page,
+    register_action,
+    return_profile,
+    transcation_input,
+    update_profile,
+)
 
 urlpatterns = [
     path("", index, name="index"),
@@ -16,5 +25,5 @@ urlpatterns = [
     path("profile-page/<int:id_num>", profile_page, name="profile-page"),
     path("update-profile", update_profile, name="update-profile"),
     path("add_transaction", transcation_input, name="add_transaction"),
-    path("returns-profile", return_profile, name="returns-profile")
+    path("returns-profile", return_profile, name="returns-profile"),
 ]
