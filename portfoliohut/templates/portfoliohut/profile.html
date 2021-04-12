@@ -17,6 +17,15 @@
 
       <!-- % Returns -->
       <!-- option to make public or private -->
+      <div class="row m-3">
+        <form action="" method="post">
+          {% csrf_token %}
+          <span>Returns: {{ profile.get_most_recent_return|floatformat:-2 }}% </span>
+          <label for="make-public"> (Make returns public) </label>
+          <input type="checkbox" id="make-public" name="make-public" value="Bike">
+          <button type="submit" class="btn btn-primary">Submit</button>
+        </form>
+      </div>
 
       <!-- Bio -->
       <div class="row m-3">
