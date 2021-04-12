@@ -12,8 +12,15 @@ from django.db.models import CharField, F, Value
 from django.shortcuts import get_list_or_404, get_object_or_404, redirect, render
 from django.urls import reverse
 
-from .forms import CashForm, CSVForm, LoginForm, ProfileForm, RegisterForm, StockForm
-from .models import CashBalance, Profile, Stock, StockTable
+from portfoliohut.forms.forms import (
+    CashForm,
+    CSVForm,
+    LoginForm,
+    ProfileForm,
+    RegisterForm,
+    StockForm,
+)
+from portfoliohut.models.models import CashBalance, Profile, Stock, StockTable
 
 
 def index(request):

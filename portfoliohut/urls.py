@@ -2,7 +2,7 @@
 
 from django.urls import path
 
-from portfoliohut.views import (
+from portfoliohut.views.views import (
     friends_competition,
     global_competition,
     index,

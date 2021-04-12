@@ -4,7 +4,7 @@ from django.contrib.auth import authenticate
 from django.contrib.auth.models import User
 from django.utils import timezone
 
-from portfoliohut.models import CashBalance, Profile, Stock
+from portfoliohut.models.models import CashBalance, Profile, Stock
 
 
 class LoginForm(forms.Form):
