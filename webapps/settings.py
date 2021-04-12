@@ -106,12 +106,14 @@ AUTH_PASSWORD_VALIDATORS = [
 
 LANGUAGE_CODE = "en-us"
 
+# Is only used for display in settings
 TIME_ZONE = "America/New_York"
 
 USE_I18N = True
 
-USE_L10N = True
+USE_L10N = False
 
+# The DB will always use UTC for times (inputs need to handle that)
 USE_TZ = True
 
 
