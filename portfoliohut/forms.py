@@ -1,9 +1,9 @@
 """Social Network Forms."""
 from django import forms
 from django.utils import timezone
-from django.contrib.auth import authenticate
 from django.contrib.auth.models import User
 from portfoliohut.models import *
+from django.contrib.auth import authenticate
 
 
 class LoginForm(forms.Form):
@@ -21,6 +21,7 @@ class LoginForm(forms.Form):
             raise forms.ValidationError("Invalid username password combination.")
 
         return cleaned_data
+
 
 class RegisterForm(forms.Form):
     """Validate registration details."""
@@ -49,8 +50,11 @@ class RegisterForm(forms.Form):
 
         return username
 
+
 class CSVForm(forms.Form):
     file = forms.FileField(allow_empty_file=True)
+
+
 class StockForm(forms.ModelForm):
     class Meta:
         model = Stock

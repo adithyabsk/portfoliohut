@@ -1,16 +1,16 @@
-from django.shortcuts import render, redirect
-from django.urls import reverse
-
-from django.contrib.messages import constants as messages
-from django.contrib.auth.decorators import login_required
-from django.contrib.auth import login, logout
-
-
-from .forms import *
-from .models import *
-
 from datetime import datetime
 import csv
+
+from django.shortcuts import render, redirect
+from django.urls import reverse
+from django.contrib.messages import constants as messages
+from django.contrib.auth.decorators import login_required
+from django.contrib.auth.models import User
+from django.contrib.auth import authenticate
+from django.contrib.auth import login, logout
+
+from .forms import LoginForm, RegisterForm, CSVForm, StockForm, CashForm, ProfileForm
+from .models import Profile, CashBalance, Stock
 
 
 def index(request):
@@ -68,9 +68,6 @@ def register_action(request):
 
     new_user = authenticate(username=register_form.cleaned_data['username'],
                             password=register_form.cleaned_data['password'])
-
-    # new_profile = Profile(user = new_user)
-    # new_profile.save()
 
     login(request, new_user)
     return redirect(reverse('index'))
@@ -134,6 +131,7 @@ def update_profile(request):
         
         return render(request, 'portfoliohut/profile.html', context) # NEED TO FIX THIS
 
+
 @login_required
 def validate_transaction(stock_data = None, cash_data = None):
     #TODO: check the transaction given some form data, return true or false
@@ -146,11 +144,10 @@ def validate_csv(date, ticker, price, quantity, action):
     pass
 
 
-
-def add_data_from_csv(request,file):
+def add_data_from_csv(request, file):
     try:
         if not file.name.endswith('.csv'):
-            messages.error(request,'File is not a CSV file')
+            messages.error(request, 'File is not a CSV file')
             return
 
         decoded_file = file.read().decode('utf-8').splitlines()
@@ -172,9 +169,9 @@ def add_data_from_csv(request,file):
                         quantity = quantity)
 
                 new_stock.save()
-    
     except:
         return
+
 
 @login_required
 def transcation_input(request):
@@ -227,4 +224,4 @@ def transcation_input(request):
 
 @login_required
 def return_profile(request):
-    return render(request, "portfoliohut/portfolio_profile.html",{})
+    return render(request, "portfoliohut/portfolio_profile.html", {})

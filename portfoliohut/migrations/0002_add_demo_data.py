@@ -3,9 +3,11 @@
 from datetime import datetime
 
 from django.db import migrations
+from django.contrib.auth.hashers import make_password
 import pytz
 
 TZ = pytz.timezone('America/New_York')
+
 
 def load_demo_user(apps, schema_editor):
     # Create Demo User
@@ -13,7 +15,7 @@ def load_demo_user(apps, schema_editor):
     user = User.objects.create(
         username="demo",
         email="demo@example.com",
-        password="demo",
+        password=make_password("demo"),
         first_name="Jane",
         last_name="Doe"
     )
