@@ -1,6 +1,17 @@
 import django_tables2 as tables
+from collections import defaultdict
+from typing import Optional
+
+import numpy as np
+import pandas as pd
+import yfinance as yf
+
 from django.contrib.auth.models import User
 from django.db import models
+from django.db.models import QuerySet
+from django.db.models.fields import DateField
+from django.db.models.functions import Cast
+from django.utils.timezone import now
 
 STOCK_ACTIONS = (
     ("buy", "BUY"),
@@ -8,6 +19,154 @@ STOCK_ACTIONS = (
 )
 
 CASH_BALANCE_ACTIONS = (("withdraw", "WITHDRAW"), ("deposit", "DEPOSIT"))
+
+
+# TODO (@eab148): Make sure that input dates for stocks are not before January 1st, 2000
+#                 or, we need to amend this algorithm
+def _build_stock_lookup(
+    tickers_qset: QuerySet[str], start_date: Optional[str] = "2000-01-01"
+) -> pd.DataFrame:
+    """Generate a lookup table with daily stock prices for a given portfolio.
+
+    The dataframe index will have the dates and the columns will be the tickers.
+
+                TSLA GOOG AAPL
+    2021-01-01  200  1232 123
+    2021-01-02  212  1233 100
+    ...
+    2021-03-28  ...
+
+    tickers: A queryset of valid tickers
+    start_date: The start date of the yfinance lookup
+
+    Return:
+        prices_df (pd.DataFrame)
+
+    """
+    # We append the data horizontally so that the uneven rows get back filled with NaNs
+    # automatically when we transpose the dataframe.
+    ticker_prices = []
+    for tic in tickers_qset:
+        ticker_org_data = yf.Ticker(tic).history(start=start_date, interval="1d")
+        ticker_prices.append(ticker_org_data["Close"])
+
+    prices_df = pd.DataFrame(data=ticker_prices).T
+    prices_df.columns = list(tickers_qset)
+    prices_df.index.name = "date"
+    prices_df.index = prices_df.index.normalize()
+
+    # Handle edge case where "today" is the weekend but the data only exists up to Friday
+    last_date = prices_df.index[-1]
+    if now().date() > last_date:
+        append_idx = pd.date_range(
+            start=last_date + pd.Timedelta(days=1), end=now().date(), freq="D"
+        )
+        append_cols = prices_df.columns
+        data = np.empty(
+            (
+                len(append_idx),
+                len(append_cols),
+            )
+        )
+        data[:] = prices_df.iloc[-1] * len(append_idx)
+        prices_df = prices_df.append(
+            pd.DataFrame(data=data, columns=append_cols, index=append_idx)
+        )
+
+    # Resample the dataframe to fill last known prices on days when the stock market is closed
+    prices_df = prices_df.resample("D").ffill()
+
+    return prices_df
+
+
+def _calc_returns(stock_qset: "QuerySet[Stock]", stock_lookup: pd.DataFrame):
+    """Compute the returns for a given query set of of stock transactions.
+
+    Assumes that the qset is ordered by increasing dates.
+
+    Args:
+        stock_qset: A queryset of stock transactions
+        stock_lookup: Output of `_build_stock_lookup`, a lookup table of tickers and prices on each
+            date.
+
+    Returns:
+        pd.Series: returns percentages with `pd.DateTimeIndex` as indices
+
+    """
+    # Strip timezone and just get the date
+    # all timezones are UTC so we don't need that information in here
+    start_date = stock_qset.first().date_time.replace(tzinfo=None).date()
+    today = now().date()
+    date_range = pd.date_range(start=start_date, end=today, freq="D").date.tolist()
+    portfolio = defaultdict(int)
+    returns = []
+    prev_balance = None
+    sale_cash = 0
+
+    # Don't need to convert this to a set since the query set supports the in operation
+    portfolio_dates_set = (
+        stock_qset.annotate(date_only=Cast("date_time", DateField()))
+        .values_list("date_only", flat=True)
+        .distinct()
+    )
+
+    # Assume that the balance and tickers are validated and you never
+    # over extend yourself. Also does not take into account purchasing
+    # on margin.
+
+    # We don't care about cash withdrawals or deposits but we do care about money that is earned
+    # through sales, we should keep that in our balances from a returns perspective.
+    for date in date_range:
+        cash_mod = 0
+        if date in portfolio_dates_set:
+            # Update portfolio
+            stock_on_date_qset = stock_qset.filter(date_time__date=date)
+            for stock in stock_on_date_qset:
+                # Add shares if buying otherwise subtract shares
+                share_count = stock.quantity * (1 if stock.action == "Buy" else -1)
+                portfolio[stock.ticker] += share_count
+                if stock.action == "Sell":  # selling locks in gains
+                    sale_cash += stock.quantity * stock.price
+                else:  # Handle infusion of cash
+                    cash_mod += float(stock.quantity * stock.price)
+
+        # Base case for when no stock actions have been taken yet
+        if len(portfolio) == 0 and sale_cash == 0:
+            returns.append(np.nan)
+            continue
+
+        # Compute updated balance
+        curr_balance = (
+            sum(
+                [
+                    shares
+                    * stock_lookup.loc[
+                        date.isoformat(), ticker
+                    ]  # price (on that day) * quantity
+                    for ticker, shares in portfolio.items()
+                ]
+            )
+            + sale_cash
+        )
+        curr_return = np.nan
+        # If cashmod is zero this is the standard returns calculation, but if you sold stock, then
+        # we "lock-in" those gains into the returns calculation
+        if prev_balance is not None:
+            curr_return = (curr_balance - (prev_balance + cash_mod)) / (
+                prev_balance + cash_mod
+            )
+
+        returns.append(curr_return)
+        prev_balance = curr_balance
+
+    rslt = pd.Series(returns, date_range, name="Returns")
+
+    # If the results are all null, then we can just return an empty series
+    nonzero_ser = rslt[(rslt != 0) & ~rslt.isnull()]
+    if len(nonzero_ser) > 0:
+        return rslt.loc[nonzero_ser.index[0] :]
+    else:
+        return pd.Series([], name="Returns")  # emtpy
 
 
 class Profile(models.Model):
@@ -19,10 +178,31 @@ class Profile(models.Model):
         "Profile", blank=True, related_name="friend_requests_list"
     )
 
+    def get_returns_df(self) -> pd.Series:
+        stocks_qset = self.stock_set.order_by("date_time")
+        # We need order_by here because SQL is finicky
+        # https://stackoverflow.com/a/10849214/3262054
+        tickers = (
+            stocks_qset.order_by("ticker").values_list("ticker", flat=True).distinct()
+        )
+        prices_df = _build_stock_lookup(tickers)
+        returns_series = _calc_returns(stocks_qset, prices_df)
+
+        return returns_series
+
+    def get_cumulative_returns(self) -> pd.Series:
+        return (1 + self.get_returns_df()).cumprod() - 1
+
+    def get_most_recent_return(self) -> float:
+        return self.get_cumulative_returns().iloc[-1]
+
     def __str__(self):
         return f"user={self.user.get_full_name()}"
 
 
+# TODO: Normalize the database to avoid having to convert the query sets to lists (i.e. when we want
+#       to merge both cashbalance and stocks. (this is highly inefficient, apparently)
+#       https://en.wikipedia.org/wiki/Database_normalization
 class CashBalance(models.Model):
     action = models.CharField(max_length=8, choices=CASH_BALANCE_ACTIONS)
     date_time = models.DateTimeField()
