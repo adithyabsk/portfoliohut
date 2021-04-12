@@ -8,10 +8,9 @@ from django.contrib.auth import authenticate, login, logout
 from django.contrib.auth.decorators import login_required
 from django.contrib.auth.models import User
 from django.contrib.messages import constants as messages
+from django.db.models import CharField, F, Value
 from django.shortcuts import get_list_or_404, get_object_or_404, redirect, render
 from django.urls import reverse
-from django.db.models import F, CharField, Value
-
 
 from .forms import CashForm, CSVForm, LoginForm, ProfileForm, RegisterForm, StockForm
 from .models import CashBalance, Profile, Stock, StockTable
@@ -305,21 +304,17 @@ def return_profile(request):
         )
         cash_transactions_table = CashBalance.objects.filter(profile=profile).order_by(
             "date_time"
-            )
+        )
 
         cash_transactions_table = cash_transactions_table.annotate(
-            price=F('value'),
-            ticker=Value('--Cash--', output_field=CharField())
-            ).values('price', 
-            'action', 
-            'date_time', 
-            'ticker')
+            price=F("value"), ticker=Value("--Cash--", output_field=CharField())
+        ).values("price", "action", "date_time", "ticker")
 
-        cash_transactions_table = cash_transactions_table.filter(profile=profile).order_by(
-            "date_time"
-            )
-        
-        records = chain(stock_transactions_table , cash_transactions_table)
+        cash_transactions_table = cash_transactions_table.filter(
+            profile=profile
+        ).order_by("date_time")
+
+        records = chain(stock_transactions_table, cash_transactions_table)
 
         table = StockTable(records)
 
