@@ -196,9 +196,6 @@ def transcation_input(request):
 
     context = {}
 
-    for item in request.POST:
-        print(item)
-
     if "submit_stock" in request.POST:
         stock_form = StockForm(request.POST)
         context["stock_form"] = stock_form
@@ -219,13 +216,13 @@ def transcation_input(request):
 
         new_stock.save()
 
-    if "submit_csv" in request.POST:
+    elif "submit_csv" in request.POST:
         csv_form = CSVForm(request.POST, request.FILES)
         context["csv_form"] = csv_form
         if csv_form.is_valid():
             add_data_from_csv(request, request.FILES["file"])
 
-    if "submit_cash" in request.POST:
+    elif "submit_cash" in request.POST:
         cash_form = CashForm(request.POST)
         context["cash_form"] = cash_form
 
@@ -270,6 +267,10 @@ def get_current_prices(stock_map):
 
 @login_required
 def return_profile(request):
+    """
+    Call Yahoo finance for all the stocks that are present in the user's portfolio
+    Call all the transactions of the current user profile.
+    """
     if request.method == "GET":
         stock_map = defaultdict(int)
         # Query the database
@@ -290,7 +291,6 @@ def return_profile(request):
                 cash_balance -= transaction.value
 
         stocks, total = get_current_prices(stock_map)
-        # stocks.append(["Cash", "--", cash_balance])
 
         # Write logic for pagination and transactions table
         stock_transactions_table = Stock.objects.filter(profile=profile).order_by(
@@ -310,7 +310,4 @@ def return_profile(request):
             },
         )
 
-    """
-    Call Yahoo finance for all the stocks that are present in the user's portfolio
-    Call all the transactions of the current user profile.
-    """
+  
