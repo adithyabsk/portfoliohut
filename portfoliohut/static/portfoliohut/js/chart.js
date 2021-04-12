@@ -33,9 +33,9 @@ window.onload = function () {
           dataPoints : dataPoints
         }]
       }],
-      
+
     });
-  
+
   d3.csv("./data/transactions - transactions.csv", function(data) {
       for (var i = 0; i < data.length; i++) {
           dataPoints.push({x: new Date(data[i].DATE), y: Number(data[i].Returns)});
@@ -43,7 +43,6 @@ window.onload = function () {
           console.log(data[i].Returns);
       }
       stockChart.render();
-  
+
   });
   }
-  

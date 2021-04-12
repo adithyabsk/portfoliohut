@@ -13,14 +13,24 @@ Tested on Python 3.8.0
 Initial setup steps
 
 ```shell
+$ brew install pre-commit
 $ python -m venv venv
 $ source ./venv/bin/activate
 (venv) $ python manage.py migrate
 (venv) $ pip install -r requirements.txt
+(venv) $ pip install -r requirements-dev.txt
+(venv) $ pre-commit install # runs before each commit you make
 ```
 
 Running the server
 
 ```shell
 (venv) $ python manage.py runserver
+```
+
+Running pre-commit on all your files. It already automatically runs on each
+commit.
+
+```shell
+(venv) $ pre-commit run -a
 ```

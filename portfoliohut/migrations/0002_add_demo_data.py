@@ -2,11 +2,11 @@
 
 from datetime import datetime
 
-from django.db import migrations
-from django.contrib.auth.hashers import make_password
 import pytz
+from django.contrib.auth.hashers import make_password
+from django.db import migrations
 
-TZ = pytz.timezone('America/New_York')
+TZ = pytz.timezone("America/New_York")
 
 
 def load_demo_user(apps, schema_editor):
@@ -17,7 +17,7 @@ def load_demo_user(apps, schema_editor):
         email="demo@example.com",
         password=make_password("demo"),
         first_name="Jane",
-        last_name="Doe"
+        last_name="Doe",
     )
     user.save()
 
@@ -31,7 +31,9 @@ def load_demo_user(apps, schema_editor):
     cb_action = "deposit"
     cb_date = datetime(year=2020, month=1, day=1, tzinfo=TZ)
     cb_value = 100_000.00
-    CashBalance(profile=profile, action=cb_action, date_time=cb_date, value=cb_value).save()
+    CashBalance(
+        profile=profile, action=cb_action, date_time=cb_date, value=cb_value
+    ).save()
 
     # Add stocks actions
     Stock = apps.get_model("portfoliohut", "Stock")
@@ -45,16 +47,18 @@ def load_demo_user(apps, schema_editor):
     stock_actions = ["buy", "buy", "buy", "sell"]
     stock_quantities = [40, 100, 20, 30]
     stock_prices = [173.64, 346.49, 1403.26, 480.67]
-    for st, sd, sa, sq, sp in zip(stock_tickers, stock_dates, stock_actions, stock_quantities, stock_prices):
-        Stock(profile=profile, ticker=st, action=sa, date_time=sd, price=sp, quantity=sq).save()
+    for st, sd, sa, sq, sp in zip(
+        stock_tickers, stock_dates, stock_actions, stock_quantities, stock_prices
+    ):
+        Stock(
+            profile=profile, ticker=st, action=sa, date_time=sd, price=sp, quantity=sq
+        ).save()
 
 
 class Migration(migrations.Migration):
 
     dependencies = [
-        ('portfoliohut', '0001_initial'),
+        ("portfoliohut", "0001_initial"),
     ]
 
-    operations = [
-        migrations.RunPython(load_demo_user)
-    ]
+    operations = [migrations.RunPython(load_demo_user)]

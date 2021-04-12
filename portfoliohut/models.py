@@ -1,23 +1,22 @@
-from django.db import models
 from django.contrib.auth.models import User
+from django.db import models
 
 STOCK_ACTIONS = (
     ("buy", "BUY"),
     ("sell", "SELL"),
 )
 
-CASH_BALANCE_ACTIONS = (
-    ("withdraw", "WITHDRAW"),
-    ("deposit", "DEPOSIT")
-)
+CASH_BALANCE_ACTIONS = (("withdraw", "WITHDRAW"), ("deposit", "DEPOSIT"))
 
 
 class Profile(models.Model):
     user = models.OneToOneField(User, on_delete=models.PROTECT)
     bio = models.CharField(max_length=240, default="Hello! I'm new to Portfolio Hut.")
 
-    friends = models.ManyToManyField("Profile", blank=True, related_name='friends_list')
-    friend_requests = models.ManyToManyField("Profile", blank=True, related_name='friend_requests_list')
+    friends = models.ManyToManyField("Profile", blank=True, related_name="friends_list")
+    friend_requests = models.ManyToManyField(
+        "Profile", blank=True, related_name="friend_requests_list"
+    )
 
     def __str__(self):
         return f"user={self.user.get_full_name()}"
