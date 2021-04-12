@@ -51,15 +51,15 @@ class Stock(models.Model):
         )
 
 
-
 class StockTable(tables.Table):
     """
-    This class is a helper class used by django_tables2. The library can 
+    This class is a helper class used by django_tables2. The library can
     convert a DB table to a HTML table based on the input model. This
-    Columns can be customized with respect to user requirements. i.e no ID 
+    Columns can be customized with respect to user requirements. i.e no ID
     displayed in this table.
     Has in built pagination feature as well.
     """
+
     class Meta:
         model = Stock
         sequence = (

@@ -253,8 +253,8 @@ def get_current_prices(stock_map):
             ticker_details = []
             ticker_details.append(k)
             ticker_price = yf.Ticker(k)
-            ticker_details.append(ticker_price.info["bid"])
-            stock_value = ticker_price.info["bid"] * v
+            ticker_details.append(ticker_price.info["regularMarketPreviousClose"])
+            stock_value = ticker_price.info["regularMarketPreviousClose"] * v
             total += stock_value
             ticker_details.append(round(stock_value, 2))
             result.append(ticker_details)
@@ -282,6 +282,7 @@ def return_profile(request):
             else:
                 stock_map[transaction.ticker] -= transaction.quantity
 
+        print(stock_map)
         all_cash_transactions = get_list_or_404(CashBalance, profile=profile)
         cash_balance = 0
         for transaction in all_cash_transactions:
@@ -309,5 +310,3 @@ def return_profile(request):
                 "cash": "${:,.2f}".format(cash_balance),
             },
         )
-
-  
