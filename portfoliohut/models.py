@@ -1,6 +1,7 @@
 from collections import defaultdict
 from typing import Optional
 
+import django_tables2 as tables
 import numpy as np
 import pandas as pd
 import yfinance as yf
@@ -227,3 +228,28 @@ class Stock(models.Model):
             f"ticker={self.ticker}, profile={self.profile.user.get_full_name()}, "
             f"date_time={self.date_time}"
         )
+
+
+class StockTable(tables.Table):
+    """
+    This class is a helper class used by django_tables2. The library can
+    convert a DB table to a HTML table based on the input model. This
+    Columns can be customized with respect to user requirements. i.e no ID
+    displayed in this table.
+    Has in built pagination feature as well.
+    """
+
+    class Meta:
+        model = Stock
+        sequence = (
+            "action",
+            "ticker",
+            "price",
+            "quantity",
+            "date_time",
+        )
+        exclude = (
+            "profile",
+            "id",
+        )
+        attrs = {"width": "160%"}
