@@ -282,7 +282,6 @@ def return_profile(request):
             else:
                 stock_map[transaction.ticker] -= transaction.quantity
 
-        print(stock_map)
         all_cash_transactions = get_list_or_404(CashBalance, profile=profile)
         cash_balance = 0
         for transaction in all_cash_transactions:
