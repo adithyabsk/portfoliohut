@@ -103,11 +103,8 @@ def _calc_returns(stock_qset: "QuerySet[Stock]", stock_lookup: pd.DataFrame):
     sale_cash = 0
 
     # Don't need to convert this to a set since the query set supports the in operation
-    portfolio_dates_set = (
-        stock_qset.annotate(date_only=Cast("date_time", DateField()))
-        .values_list("date_only", flat=True)
-        .distinct()
-    )
+    stock_qset = stock_qset.annotate(date_only=Cast("date_time", DateField()))
+    portfolio_dates_set = stock_qset.values_list("date_only", flat=True).distinct()
 
     # Assume that the balance and tickers are validated and you never
     # over extend yourself. Also does not take into account purchasing
@@ -119,15 +116,17 @@ def _calc_returns(stock_qset: "QuerySet[Stock]", stock_lookup: pd.DataFrame):
         cash_mod = 0
         if date in portfolio_dates_set:
             # Update portfolio
-            stock_on_date_qset = stock_qset.filter(date_time__date=date)
+            stock_on_date_qset = stock_qset.filter(date_only=date)
             for stock in stock_on_date_qset:
                 # Add shares if buying otherwise subtract shares
-                share_count = stock.quantity * (1 if stock.action == "Buy" else -1)
+                share_count = stock.quantity * (1 if stock.action == "buy" else -1)
                 portfolio[stock.ticker] += share_count
-                if stock.action == "Sell":  # selling locks in gains
-                    sale_cash += stock.quantity * stock.price
-                else:  # Handle infusion of cash
+                if stock.action == "sell":  # selling locks in gains
                     cash_mod += float(stock.quantity * stock.price)
+
+        # sale cash is all amount total sold
+        # cash mod handles current amount sold
+        sale_cash += cash_mod
 
         # Base case for when no stock actions have been taken yet
         if len(portfolio) == 0 and sale_cash == 0:
@@ -193,7 +192,11 @@ class Profile(models.Model):
         return (1 + self.get_returns_df()).cumprod() - 1
 
     def get_most_recent_return(self) -> float:
-        return self.get_cumulative_returns().iloc[-1]
+        returns = self.get_cumulative_returns()
+        if not returns.empty:
+            return self.get_cumulative_returns().iloc[-1]
+        else:
+            return float("nan")
 
     def __str__(self):
         return f"user={self.user.get_full_name()}"
