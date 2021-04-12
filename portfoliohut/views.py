@@ -1,6 +1,7 @@
 import csv
 from collections import defaultdict
 from datetime import datetime
+from itertools import chain
 
 import yfinance as yf
 from django.contrib.auth import authenticate, login, logout
@@ -9,6 +10,8 @@ from django.contrib.auth.models import User
 from django.contrib.messages import constants as messages
 from django.shortcuts import get_list_or_404, get_object_or_404, redirect, render
 from django.urls import reverse
+from django.db.models import F, CharField, Value
+
 
 from .forms import CashForm, CSVForm, LoginForm, ProfileForm, RegisterForm, StockForm
 from .models import CashBalance, Profile, Stock, StockTable
@@ -187,6 +190,10 @@ def add_data_from_csv(request, file):
 
 @login_required
 def transcation_input(request):
+    """
+    Allows user to input individual stock/ CSV stock / Cash transactions
+    Validated entries are converted to model objects.
+    """
     if request.method == "GET":
         return render(
             request,
@@ -296,7 +303,26 @@ def return_profile(request):
         stock_transactions_table = Stock.objects.filter(profile=profile).order_by(
             "date_time"
         )
-        table = StockTable(stock_transactions_table)
+        cash_transactions_table = CashBalance.objects.filter(profile=profile).order_by(
+            "date_time"
+            )
+
+        cash_transactions_table = cash_transactions_table.annotate(
+            price=F('value'),
+            ticker=Value('--Cash--', output_field=CharField())
+            ).values('price', 
+            'action', 
+            'date_time', 
+            'ticker')
+
+        cash_transactions_table = cash_transactions_table.filter(profile=profile).order_by(
+            "date_time"
+            )
+        
+        records = chain(stock_transactions_table , cash_transactions_table)
+
+        table = StockTable(records)
+
         table.paginate(page=request.GET.get("page", 1), per_page=25)
 
         return render(

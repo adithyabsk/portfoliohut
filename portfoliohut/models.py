@@ -59,7 +59,6 @@ class StockTable(tables.Table):
     displayed in this table.
     Has in built pagination feature as well.
     """
-
     class Meta:
         model = Stock
         sequence = (
