@@ -29,6 +29,11 @@ def login_action(request):
 
 
 @login_required
+def logged_in_user_profile(request):
+    return redirect(reverse("profile", args=[request.user.id]))
+
+
+@login_required
 def logout_action(request):
     logout(request)
     return redirect(reverse("login"))
@@ -55,16 +60,8 @@ def register_action(request):
         email=register_form.cleaned_data["email"],
         first_name=register_form.cleaned_data["first_name"],
         last_name=register_form.cleaned_data["last_name"],
-    )
-    new_user.save()
+    ).save()
 
-    profile = Profile.objects.create(user=new_user)
-    profile.save()
+    Profile(user=new_user).save()
 
-    new_user = authenticate(
-        username=register_form.cleaned_data["username"],
-        password=register_form.cleaned_data["password"],
-    )
-
-    login(request, new_user)
     return redirect(reverse("index"))

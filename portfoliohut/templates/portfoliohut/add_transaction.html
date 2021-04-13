@@ -1,53 +1,63 @@
 {% extends 'portfoliohut/base.html' %}
 {% load static %}
 {% block head %}
-  <link rel="stylesheet" href="{% static "portfoliohut/css/remove-asterisk.css" %}">
+  <link rel="stylesheet" href="{% static 'portfoliohut/css/remove-asterisk.css' %}">
   <title>Add Transactions</title>
 {% endblock head %}
 
 {% block content %}
   <div class="container">
+
+    <!-- Page Title -->
     <div class="row mt-5">
       <h1 class="text-center" id="id_page_name">Add Transactions</h1>
     </div>
-    <div class="row m-3 d-flex justify-content-center">
-      <div class="col-md-6"> <h2>Add stock Transaction Details</h2>
-        <form method = "POST"  enctype="multipart/form-data">
-          {% csrf_token %}
-          <!-- TODO: Add the stock form here  -->
 
+    <!-- Form Alignment -->
+    <div class="row m-3 d-flex justify-content-center">
+      <div class="col-md-6">
+        <h2>Manual Import</h2>
+
+        <!-- Stock Transaction -->
+        <h4>Stock Transaction</h4>
+        {% if stock_error_msg %} {{ stock_error_msg }} {% endif %}
+        <form method = "POST"  enctype="multipart/form-data">
+          {% csrf_token %} <!-- Consider changing to make format nicer with errors -->
           <div class="row">
             {{stock_form}}
-          <button type="submit" class="btn btn-primary" id="id_stock_button" name = "submit_stock">Submit</button>
+          </div>
+          <br/><button type="submit" class="btn btn-primary" id="id_stock_button" name="submit_stock">Submit</button>
+        </form><br/>
 
-          <br>
-        </form>
+        <!-- Cash Transaction -->
+        <h4>Cash Transaction</h4>
+        {% if cash_error_msg %} {{ cash_error_msg }} {% endif %}
+        <form method = "POST">
+          {% csrf_token %}
+          <div class="row">
+            {{cash_form}} <!-- Consider changing to make format nicer with errors -->
+          </div>
+          <br/><button type="submit" class="btn btn-primary" id="id_cash_button" name = "submit_cash">Submit</button>
+        </form><br/><br/>
 
-
+        <!-- CSV Upload -->
+        <h2 class="col-md-6">CSV Upload</h2>
         <form method = "POST" enctype="multipart/form-data">
             {% csrf_token %}
             <div class="row">
-                {{csv_form}}
-            <button type="submit" class="btn btn-primary" id="id_stock_button" name = "submit_csv">Submit</button>
+              {{csv_form}} <!-- Consider changing to make format nicer with errors -->
             </div>
+            <br/><button type="submit" class="btn btn-primary" id="id_stock_button" name="submit_csv">Submit</button>
         </form>
-      </div>
-    </div>
 
+    <!-- Go to Portfolio -->
+    <br/><a href="{% url 'returns-profile'%}" class="m-2 d-flex justify-content-center">
+      <button type="submit" class="btn btn-primary">View My Portfolio</button>
+</a>
 
-    <div class="row m-3 d-flex justify-content-center">
-        <div class="col-md-6"> <h2>Add Cash Transaction Details</h2>
-          <form method = "POST">
-            {% csrf_token %}
-            <!-- TODO: Add the stock form here  -->
-            <div class="row">
-              {{cash_form}}
-            <button type="submit" class="btn btn-primary" id="id_cash_button" name = "submit_cash">Submit</button>
-          </form>
-        </div>
-      </div>
+    <!-- Alignment -->
+    </div></div>
 
-      </div>
-    </div>
+  <!-- Container -->
   </div>
 {% endblock content %}

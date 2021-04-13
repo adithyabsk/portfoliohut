@@ -15,6 +15,11 @@ from portfoliohut.finance import get_current_prices
 
 from .transactions import Stock
 
+PROFILE_TYPE_ACTIONS = (
+    ("public", "PUBLIC"),
+    ("private", "PRIVATE"),
+)
+
 
 # TODO (@eab148): Make sure that input dates for stocks are not before January 1st, 2000
 #                 or, we need to amend this algorithm
@@ -164,9 +169,11 @@ def _calc_returns(stock_qset: "QuerySet[Stock]", stock_lookup: pd.DataFrame):
 
 
 class Profile(models.Model):
-    user = models.OneToOneField(User, on_delete=models.PROTECT)
+    user = models.OneToOneField(User, on_delete=models.PROTECT, related_name="profile")
     bio = models.CharField(max_length=240, default="Hello! I'm new to Portfolio Hut.")
-
+    profile_type = models.CharField(
+        max_length=7, choices=PROFILE_TYPE_ACTIONS, default="public"
+    )
     friends = models.ManyToManyField("Profile", blank=True, related_name="friends_list")
     friend_requests = models.ManyToManyField(
         "Profile", blank=True, related_name="friend_requests_list"

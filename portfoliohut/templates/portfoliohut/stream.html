@@ -1,23 +1,60 @@
 {% extends 'portfoliohut/base.html' %}
 {% load static %}
 {% block head %}
-  <link rel="stylesheet" href="{% static "portfoliohut/css/remove-asterisk.css" %}">
+  <link rel="stylesheet" href="{% static 'portfoliohut/css/remove-asterisk.css' %}">
   <title>Stream</title>
 {% endblock head %}
 
 {% block content %}
   <div class="container">
+
+    <!-- Page Title -->
     <div class="row mt-5">
       <h1 class="text-center" id="id_page_name">{{ page_name }}</h1>
     </div>
 
-    {% for profile in profiles %}
-      <div class="row mb-3">
-        <a href="{% url 'profile-page' profile.user.id %}">
-          <span>{{ profile.user.username }}</span>
-        </a>
-      </div><br/>
-    {% endfor %}
+    <!-- Leaderboard -->
+    <div class="row m-3 d-flex justify-content-center">
+      <table class="col-md-6">
 
+        <!-- Heading -->
+        <tr>
+          <th>Rank</th>
+          <th>Username</th>
+          <th>Percent Returns</th>
+          <th>Profile Link</th>
+        </tr>
+
+        <!-- Ranking Users -->
+        {% for profile in profiles %}
+          <tr>
+            <td>{{ forloop.counter }}</td>
+            <td>{{ profile.user.username }}</td>
+            <td>{{ profile.get_most_recent_return|floatformat:-2 }}%</td>
+            <td>
+              <a href="{% url 'profile' profile.user.id %}">
+                <button class="btn btn-primary">View Profile</button>
+              </a>
+            </td>
+          </tr>
+        {% endfor %}
+
+        <!-- Show returns for logged in user if user is PUBLIC and NOT on a RANKING user -->
+        {% if request.user.profile.profile_type == 'public' %}
+          {% if not request.user.profile in profiles %}
+            <tr>
+              <td>{{ logged_in_user_rank }}</td>
+              <td>{{ request.user.username }}</td>
+              <td>{{ request.user.profile.get_most_recent_return|floatformat:-2 }}%</td>
+              <td>
+                <a href="{% url 'profile' request.user.id %}">
+                  <button class="btn btn-primary">View Profile</button>
+                </a>
+              </td>
+            </tr>
+          {% endif %}
+        {% endif %}
+      </table>
+    </div>
 </div>
 {% endblock content %}
