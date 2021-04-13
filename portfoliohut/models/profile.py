@@ -6,9 +6,12 @@ import pandas as pd
 import yfinance as yf
 from django.contrib.auth.models import User
 from django.db import models
-from django.db.models import DateField, QuerySet
+from django.db.models import CharField, F, QuerySet, Value
+from django.db.models.fields import DateField
 from django.db.models.functions import Cast
 from django.utils.timezone import now
+
+from portfoliohut.finance import get_current_prices
 
 from .transactions import Stock
 
@@ -190,6 +193,44 @@ class Profile(models.Model):
             return self.get_cumulative_returns().iloc[-1]
         else:
             return float("nan")
+
+    def get_portfolio_details(self):
+        # we are not using a query set here because we need to compute the final portfolio from the
+        # list of transactions which gives us something that is not a "django model"
+        final_portfolio = defaultdict(int)
+        # Query the database
+        all_stock_transactions = self.stock_set.all()
+        cash_balance = 0
+        for transaction in all_stock_transactions:
+            if transaction.action.upper() == "BUY":
+                final_portfolio[transaction.ticker] += transaction.quantity
+                cash_balance -= transaction.price * transaction.quantity
+            else:
+                final_portfolio[transaction.ticker] -= transaction.quantity
+                cash_balance += transaction.price * transaction.quantity
+
+        all_cash_transactions = self.cashbalance_set.all()
+        for transaction in all_cash_transactions:
+            if transaction.action.upper() == "DEPOSIT":
+                cash_balance += transaction.value
+            else:
+                cash_balance -= transaction.value
+
+        stocks, total = get_current_prices(final_portfolio)
+        return stocks, total, cash_balance
+
+    def table_query_sets(self):
+        # Write logic for pagination and transactions table
+        stock_transactions_table = self.stock_set.all().order_by("date_time")
+        cash_transactions_table = self.cashbalance_set.all().order_by("date_time")
+
+        cash_transactions_table = cash_transactions_table.annotate(
+            price=F("value"), ticker=Value("--Cash--", output_field=CharField())
+        ).values("price", "action", "date_time", "ticker")
+
+        cash_transactions_table = cash_transactions_table.order_by("date_time")
+
+        return stock_transactions_table, cash_transactions_table
 
     def __str__(self):
         return f"user={self.user.get_full_name()}"
