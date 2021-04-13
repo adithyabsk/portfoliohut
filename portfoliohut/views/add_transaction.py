@@ -7,7 +7,7 @@ from django.shortcuts import redirect, render
 from django.urls import reverse
 
 from portfoliohut.forms.forms import CashForm, CSVForm, StockForm
-from portfoliohut.models.models import CashBalance, Stock
+from portfoliohut.models import CashBalance, Stock
 
 
 def add_data_from_csv(request, file):

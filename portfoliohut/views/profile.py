@@ -2,7 +2,7 @@ from django.contrib.auth.decorators import login_required
 from django.shortcuts import redirect, render
 
 from portfoliohut.forms.forms import ProfileForm
-from portfoliohut.models.models import Profile
+from portfoliohut.models import Profile
 
 
 @login_required

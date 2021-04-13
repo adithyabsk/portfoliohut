@@ -6,7 +6,7 @@ from django.shortcuts import redirect, render
 from django.urls import reverse
 
 from portfoliohut.forms.forms import LoginForm, RegisterForm
-from portfoliohut.models.models import Profile
+from portfoliohut.models import Profile
 
 
 def login_action(request):

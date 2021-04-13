@@ -6,7 +6,7 @@ from django.contrib.auth.decorators import login_required
 from django.db.models import CharField, F, Value
 from django.shortcuts import get_list_or_404, get_object_or_404, render
 
-from portfoliohut.models.models import CashBalance, Profile, Stock, StockTable
+from portfoliohut.models import CashBalance, Profile, Stock, StockTable
 
 
 def get_current_prices(stock_map):
