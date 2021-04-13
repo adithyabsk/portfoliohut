@@ -6,3 +6,4 @@ pytz~=2021.1
 yfinance==0.1.59
 numpy==1.20.2
 pandas==1.2.3
+pandas-market-calendars==1.6.1
