@@ -25,5 +25,6 @@ def get_current_prices(stock_map: Dict[str, float]) -> Tuple[List[TickerDetail],
             ticker_price = yf.Ticker(ticker).info["regularMarketPreviousClose"]
             ticker_detail = TickerDetail(ticker, ticker_price, ticker_price * quantity)
             total += ticker_detail.total_value
+            result.append(ticker_detail)
 
     return result, total
