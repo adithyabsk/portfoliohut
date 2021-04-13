@@ -19,18 +19,14 @@ def login_action(request):
     if not login_form.is_valid():
         return render(request, "portfoliohut/login.html", {"login_form": login_form})
 
-    new_user = authenticate(
+    user = authenticate(
         username=login_form.cleaned_data["username"],
         password=login_form.cleaned_data["password"],
     )
-    login(request, new_user)
+
+    login(request, user)
 
     return redirect(reverse("index"))
-
-
-@login_required
-def logged_in_user_profile(request):
-    return redirect(reverse("profile", args=[request.user.id]))
 
 
 @login_required
@@ -60,8 +56,9 @@ def register_action(request):
         email=register_form.cleaned_data["email"],
         first_name=register_form.cleaned_data["first_name"],
         last_name=register_form.cleaned_data["last_name"],
-    ).save()
+    )
+    new_user.save()
 
     Profile(user=new_user).save()
 
-    return redirect(reverse("index"))
+    return redirect(reverse("login"))

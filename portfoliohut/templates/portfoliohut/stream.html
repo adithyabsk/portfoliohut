@@ -30,7 +30,7 @@
           <tr>
             <td>{{ forloop.counter }}</td>
             <td>{{ profile.user.username }}</td>
-            <td>{{ profile.get_most_recent_return|floatformat:-2 }}%</td>
+            <td>{{ profile.returns|floatformat:-2 }}%</td>
             <td>
               <a href="{% url 'profile' profile.user.id %}">
                 <button class="btn btn-primary">View Profile</button>
@@ -45,7 +45,7 @@
             <tr>
               <td>{{ logged_in_user_rank }}</td>
               <td>{{ request.user.username }}</td>
-              <td>{{ request.user.profile.get_most_recent_return|floatformat:-2 }}%</td>
+              <td>{% firstof request.user.profile.returns|floatformat:-2 "No Return " %}%</td>
               <td>
                 <a href="{% url 'profile' request.user.id %}">
                   <button class="btn btn-primary">View Profile</button>

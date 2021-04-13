@@ -143,7 +143,7 @@ def transaction_input(request):
         new_transaction.save()
 
     return redirect(
-        reverse("returns-profile")
+        reverse("portfolio")
     )  # redirect to portfolio to see addition of new transaction
 
 

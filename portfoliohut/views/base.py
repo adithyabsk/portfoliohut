@@ -1,3 +1,5 @@
+import math
+
 from django.contrib.auth.decorators import login_required
 from django.shortcuts import redirect, render
 from django.urls import reverse
@@ -22,31 +24,33 @@ def global_competition(request):
     # simple computations from fields, then you can use `F`
     # https://stackoverflow.com/a/6932807/3262054
     unsorted_public_profiles = public_profiles.all()
+    annotated_public_profiles = []
+    for p in unsorted_public_profiles:
+        p.returns = p.get_most_recent_return()
+        annotated_public_profiles.append(p)
     public_profiles = sorted(
-        unsorted_public_profiles,
-        key=lambda prof: prof.get_most_recent_return(),
-        reverse=True,
+        annotated_public_profiles, key=lambda prof: prof.returns, reverse=True
     )
 
-    count = 0
-    prev_percent_returns = None
+    rank = 0
     leaders = []
     for i in range(len(public_profiles)):
-        if count < NUM_LEADERS:
-            leaders.append(public_profiles[i])
-        else:
-            if prev_percent_returns == public_profiles[i]:
+        if rank < NUM_LEADERS:
+            if not math.isnan(public_profiles[i].returns):
                 leaders.append(public_profiles[i])
             else:
-                break
-        prev_percent_returns = public_profiles[i]
-        count += 1
+                print("entered")
+        rank += 1
 
     context["profiles"] = leaders
     if request.user.profile in public_profiles:
         context["logged_in_user_rank"] = (
             (*public_profiles,).index(Profile.objects.get(user=request.user))
         ) + 1
+
+    # TODO: Show logged in user their percet returns no matter what
+    else:
+        pass
     context["page_name"] = "Global Competition"
     return render(request, "portfoliohut/stream.html", context)
 

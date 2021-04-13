@@ -30,15 +30,9 @@
         <!-- Display Bio and % Returns Public/Private Selector -->
         <h3>Bio</h3>
         {% if profile.id == request.user.id %}
-          <form enctype="multipart/form-data" action="{% url 'update-profile' %}" method="post">
-              {{ profile_form }}
-{#            {% for field in profile_form.visible_fields %}#}
-{#              <div class="row">{{ field }}</div><br/>#}
-{#              <div class="error">#}
-{#                {% for error in field.errors %} {{ error }} {% endfor %}#}
-{#              </div>#}
-{#            {% endfor %}#}
-{#            <button type="submit" class="btn btn-primary">Submit</button>#}
+          <form enctype="multipart/form-data" action="{% url 'profile' request.user.id %}" method="post">
+              <div class="row">{{ profile_form }}</div>
+            <br/><button type="submit" class="btn btn-primary">Submit</button>
             {% csrf_token %}
           </form><br/>
         {% else %}
@@ -49,7 +43,7 @@
         {% endif %}
 
         <!-- Display % Returns (if Public) -->
-        {% if profile_form.profile_type.value == 'public' or profile.user == request.user or profile in request.user.friends.all %}
+        {% if profile.profile_type == 'public' or profile.user == request.user or profile in request.user.friends.all %}
           <br/><h3>Returns</h3>
             <div class="row m-3" align="center">
               <textarea readonly>{{ profile.get_most_recent_return|floatformat:-2 }}%</textarea>

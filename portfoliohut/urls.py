@@ -13,7 +13,6 @@ from portfoliohut.views import (
     profile,
     register_action,
     transaction_input,
-    update_profile,
 )
 
 urlpatterns = [
@@ -27,7 +26,6 @@ urlpatterns = [
         "logged-in-user-profile", logged_in_user_profile, name="logged-in-user-profile"
     ),
     path("profile/<int:id_num>", profile, name="profile"),
-    path("update-profile", update_profile, name="update-profile"),
     path("add-transaction", transaction_input, name="add-transaction"),
     path("portfolio", portfolio, name="portfolio"),
 ]
