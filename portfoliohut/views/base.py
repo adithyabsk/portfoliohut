@@ -23,7 +23,9 @@ def global_competition(request):
     # https://stackoverflow.com/a/6932807/3262054
     unsorted_public_profiles = public_profiles.all()
     public_profiles = sorted(
-        unsorted_public_profiles, key=lambda prof: prof.get_most_recent_return()
+        unsorted_public_profiles,
+        key=lambda prof: prof.get_most_recent_return(),
+        reverse=True,
     )
 
     count = 0
