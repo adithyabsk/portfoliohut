@@ -5,7 +5,7 @@ from django.contrib.auth.models import User
 from django.shortcuts import redirect, render
 from django.urls import reverse
 
-from portfoliohut.forms.forms import LoginForm, RegisterForm
+from portfoliohut.forms import LoginForm, RegisterForm
 from portfoliohut.models import Profile
 
 
