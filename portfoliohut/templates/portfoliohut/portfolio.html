@@ -11,68 +11,15 @@
 
     <!-- Page Title -->
     <div class="row mt-4 mb-2">
-      <h1 class="text-center">Profile</h1>
+      <h1 class="text-center">Portfolio</h1>
       <h2 class="text-center">{{ profile.user.username }}</h2>
     </div>
 
     <script src="http://d3js.org/d3.v3.min.js" charset="utf-8"></script>
-    <script type="text/javascript" src="https://canvasjs.com/assets/script/jquery-1.11.1.min.js"></script>
-    <script type="text/javascript" src="https://canvasjs.com/assets/script/canvasjs.stock.min.js"></script>
-    <script type="text/javascript">
-        window.onload = function () {
-            var returns_temp = {{ graph_returns |safe }};
-            var dates_temp = {{graph_dates|safe}};
-            var dataPoints = [];
-            var stockChart = new CanvasJS.StockChart("stockChartContainer", {
-                exportEnabled: true,
-                title: {
-                    text: "Portfolio Returns"
-                },
-                subtitles: [{
-                    text: ""
-                }],
-                charts: [{
-                    axisX: {
-                        crosshair: {
-                            enabled: true,
-                            snapToDataPoint: true,
-                            valueFormatString: "MMM YYYY"
-                        }
-                    },
-                    axisY: {
-                        title: "Return percentage",
-                        prefix: "",
-                        suffix: "%",
-                        crosshair: {
-                            enabled: true,
-                            snapToDataPoint: true,
-                            valueFormatString: "%##.##",
-                        }
-                    },
-                    data: [{
-                        type: "line",
-                        xValueFormatString: "MMM YYYY",
-                        yValueFormatString: "%##.##",
-                        dataPoints: dataPoints
-                    }]
-                }],
-
-            });
-
-            for (let i = 0; i < returns_temp.length; i++) {
-                dataPoints.push({x: new Date(dates_temp[i]), y: Number(returns_temp[i]) / 100});
-            }
-            stockChart.render();
-        }
-
-    </script>
-
-    <div id="stockChartContainer" style="height: 400px; width: 100%;"></div>
-  </div>
-  </div>
-
-  <!-- TODO: Add Table of transactions -- staticfiles
-  TODO: Add portfolio Table  -->
+   
+{% if graph %}
+{{ graph|safe }}
+  
   <br>
   <br>
   <div name="Profile Table" style="margin:auto; margin-top:2.5em">
@@ -93,7 +40,7 @@
           <th scope="row">{{ forloop.counter }}</th>
           <td>{{ entry.0 }}</td>
           <td>{{ entry.1 }}</td>
-          <td>{{ entry.2 }}</td>
+          <td>{{ entry.2 |floatformat:-2 }}</td>
         </tr>
       {% endfor %}
       </tbody>
@@ -110,6 +57,11 @@
     {% render_table table %}
 
   </div>
+
+
+ 
+</div>
+{% endif %}
 
 
 {% endblock content %}
