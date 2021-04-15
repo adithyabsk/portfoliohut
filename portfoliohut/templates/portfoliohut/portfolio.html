@@ -20,7 +20,14 @@
 {% if graph %}
 {{ graph|safe }}
   
-  <br>
+
+    <!-- Add/Delete Transaction -->
+    <a href="{% url 'add-transaction'%}" class="m-2 d-flex justify-content-center">
+      <button type="submit" class="btn btn-primary">Add Transaction</button>
+    </a>
+
+  <!-- TODO: Add Table of transactions -- staticfiles
+  TODO: Add portfolio Table  -->
   <br>
   <div name="Profile Table" style="margin:auto; margin-top:2.5em">
     <h4 style="margin:center; text-align:center;">Current Portfolio Summary</h4>

@@ -181,6 +181,11 @@ class Profile(models.Model):
 
     def get_returns_df(self) -> pd.Series:
         stocks_qset = self.stock_set.order_by("date_time")
+
+        # EVIE'S ADDITIONS
+        if len(stocks_qset) == 0:
+            return pd.Series()
+
         # We need order_by here because SQL is finicky
         # https://stackoverflow.com/a/10849214/3262054
         tickers = (

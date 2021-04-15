@@ -13,6 +13,7 @@ class ProfileForm(forms.ModelForm):
         widgets = {
             "bio": forms.Textarea(attrs={"rows": 2}),
         }
+        labels = {"bio": "", "profile_type": "Percent Returns"}
 
     field_order = ["bio", "profile_type"]
 
