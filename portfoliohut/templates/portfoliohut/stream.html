@@ -32,7 +32,7 @@
             <td>{{ profile.user.username }}</td>
             <td>{{ profile.returns|floatformat:-2 }}%</td>
             <td>
-              <a href="{% url 'profile' profile.user.id %}">
+              <a href="{% url 'profile' profile.user.username %}">
                 <button class="btn btn-primary">View Profile</button>
               </a>
             </td>
@@ -47,7 +47,7 @@
               <td>{{ request.user.username }}</td>
               <td>{% firstof request.user.profile.returns|floatformat:-2 "No Return " %}%</td>
               <td>
-                <a href="{% url 'profile' request.user.id %}">
+                <a href="{% url 'profile' request.user.username %}">
                   <button class="btn btn-primary">View Profile</button>
                 </a>
               </td>

@@ -1,4 +1,5 @@
 from django.contrib.auth.decorators import login_required
+from django.contrib.auth.models import User
 from django.shortcuts import redirect, render
 from django.urls import reverse
 
@@ -8,20 +9,21 @@ from portfoliohut.models import Profile
 
 @login_required
 def logged_in_user_profile(request):
-    return redirect(reverse("profile", args=[request.user.id]))
+    return redirect(reverse("profile", args=[request.user.username]))
 
 
 @login_required
-def profile(request, id_num):
+def profile(request, username):
     context = {}
 
     # Make sure user exists
-    profile_exists = Profile.objects.filter(id=id_num)
-    if not profile_exists:
+    user_exists = User.objects.filter(username=username)
+    if not user_exists:
         return redirect("index")
 
     # Save user's profile
-    profile = Profile.objects.get(id=id_num)
+    user_id = User.objects.get(username=username)
+    profile = Profile.objects.get(user_id=user_id)
     context["profile"] = profile
 
     # Handle GET request

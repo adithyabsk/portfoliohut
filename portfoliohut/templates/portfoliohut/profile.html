@@ -30,7 +30,7 @@
         <!-- Display Bio and % Returns Public/Private Selector -->
         <h3>Bio</h3>
         {% if profile.id == request.user.id %}
-          <form enctype="multipart/form-data" action="{% url 'profile' request.user.id %}" method="post">
+          <form enctype="multipart/form-data" action="{% url 'profile' request.user.username %}" method="post">
               <div class="row">{{ profile_form }}</div>
             <br/><button type="submit" class="btn btn-primary">Submit</button>
             {% csrf_token %}
@@ -46,7 +46,7 @@
         {% if profile.profile_type == 'public' or profile.user == request.user or profile in request.user.friends.all %}
           <br/><h3>Returns</h3>
             <div class="row m-3" align="center">
-              <textarea readonly>{{ profile.get_most_recent_return|floatformat:-2 }}%</textarea>
+              <textarea readonly>{% firstof profile.get_most_recent_return|floatformat:-2 "No Return " %}%</textarea>
             </div><br/>
         {% endif %}
 
@@ -70,7 +70,7 @@
                 <span>Pending Friend Requests</span>
                   <ul>
                     {% for friend in profile.friend_requests.all %}
-                      <li><a href="{% url 'profile' friend_request.id %}" class="friend">{{ friend_request.username }}</a></li>
+                      <li><a href="{% url 'profile' friend_request.username %}" class="friend">{{ friend_request.username }}</a></li>
                       <button class="btn btn-primary">Accept</button>
                       <button class="btn btn-primary">Decline</button>
                     {% endfor %}
@@ -86,7 +86,7 @@
               <span>Friends</span>
               <ul>
                 {% for friend in profile.friends.all %}
-                  <li><a href="{% url 'profile' friend.id %}" class="friend">
+                  <li><a href="{% url 'profile' friend.username %}" class="friend">
                     {{ friend.username }}
                   </a></li>
                 {% endfor %}

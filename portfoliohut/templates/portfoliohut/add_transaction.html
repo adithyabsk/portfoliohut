@@ -22,7 +22,7 @@
         <h4>Stock Transaction</h4>
         {% if stock_error_msg %} {{ stock_error_msg }} {% endif %}
         <form method = "POST"  enctype="multipart/form-data">
-          {% csrf_token %} <!-- Consider changing to make format nicer with errors -->
+          {% csrf_token %}
           <div class="row">
             {{stock_form}}
           </div>
@@ -35,7 +35,7 @@
         <form method = "POST">
           {% csrf_token %}
           <div class="row">
-            {{cash_form}} <!-- Consider changing to make format nicer with errors -->
+            {{cash_form}}
           </div>
           <br/><button type="submit" class="btn btn-primary" id="id_cash_button" name = "submit_cash">Submit</button>
         </form><br/><br/>
@@ -45,7 +45,7 @@
         <form method = "POST" enctype="multipart/form-data">
             {% csrf_token %}
             <div class="row">
-              {{csv_form}} <!-- Consider changing to make format nicer with errors -->
+              {{csv_form}}
             </div>
             <br/><button type="submit" class="btn btn-primary" id="id_stock_button" name="submit_csv">Submit</button>
         </form>

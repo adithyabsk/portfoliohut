@@ -25,11 +25,17 @@ def global_competition(request):
     # https://stackoverflow.com/a/6932807/3262054
     unsorted_public_profiles = public_profiles.all()
     annotated_public_profiles = []
+
     for p in unsorted_public_profiles:
         p.returns = p.get_most_recent_return()
         annotated_public_profiles.append(p)
+
     public_profiles = sorted(
-        annotated_public_profiles, key=lambda prof: prof.returns, reverse=True
+        annotated_public_profiles,
+        key=lambda prof: prof.returns
+        if not math.isnan(prof.returns)
+        else float("-inf"),
+        reverse=True,
     )
 
     rank = 0
@@ -38,14 +44,12 @@ def global_competition(request):
         if rank < NUM_LEADERS:
             if not math.isnan(public_profiles[i].returns):
                 leaders.append(public_profiles[i])
-            else:
-                print("entered")
         rank += 1
 
     context["profiles"] = leaders
     if request.user.profile in public_profiles:
         context["logged_in_user_rank"] = (
-            (*public_profiles,).index(Profile.objects.get(user=request.user))
+            public_profiles.index(Profile.objects.get(user=request.user))
         ) + 1
 
     # TODO: Show logged in user their percet returns no matter what
