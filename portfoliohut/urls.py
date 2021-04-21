@@ -3,6 +3,7 @@
 from django.urls import path
 
 from portfoliohut.views import (
+    friend,
     friends_competition,
     global_competition,
     index,
@@ -12,6 +13,7 @@ from portfoliohut.views import (
     portfolio,
     profile,
     register_action,
+    respond_to_friend_request,
     transaction_input,
 )
 
@@ -28,4 +30,10 @@ urlpatterns = [
     path("profile/<str:username>", profile, name="profile"),
     path("add-transaction", transaction_input, name="add-transaction"),
     path("portfolio", portfolio, name="portfolio"),
+    path("friend/<str:username>", friend, name="friend"),
+    path(
+        "respond-to-friend-request/<str:username>/<str:action>",
+        respond_to_friend_request,
+        name="respond-to-friend-request",
+    ),
 ]

@@ -51,3 +51,91 @@ def profile(request, username):
         context["profile_form"] = profile_form
 
         return render(request, "portfoliohut/profile.html", context)
+
+
+@login_required
+def friend(request, username):
+    context = {}
+
+    # Cannot friend yourself
+    if username == request.user.username:
+        return redirect(reverse, "index")
+
+    # Make sure user exists
+    other_user_exists = User.objects.filter(username=username)
+    if not other_user_exists:
+        return redirect(reverse("index"))
+
+    # Save users' profiles
+    user_id = User.objects.get(username=username)
+    other_user = Profile.objects.get(user_id=user_id)
+    logged_in_user = Profile.objects.get(user=request.user)
+    context["profile"] = other_user
+
+    # Handle GET request
+    if request.method == "GET":
+
+        # See if friend request already exists
+        request_already_exists = other_user.friend_requests.filter(
+            user_id=logged_in_user.user_id
+        )
+        if not request_already_exists:
+            already_friends = other_user.friends.filter(user_id=logged_in_user.user_id)
+
+            # Send friend request
+            if not already_friends:
+                other_user.friend_requests.add(logged_in_user)
+
+            # Unfriend
+            else:
+                other_user.friends.remove(logged_in_user)
+                logged_in_user.friends.remove(other_user)
+
+            logged_in_user.save()
+            other_user.save()
+
+        return redirect(reverse("profile", args=[username]))
+
+
+@login_required
+def respond_to_friend_request(request, username, action):
+    print("respond_to_friend_request")
+    context = {}
+
+    # Cannot friend yourself
+    if username == request.user.username:
+        return redirect(reverse, "index")
+
+    # Make sure user exists
+    other_user_exists = User.objects.filter(username=username)
+    if not other_user_exists:
+        return redirect(reverse("index"))
+
+    # Save user's profile
+    user_id = User.objects.get(username=username)
+    other_user = Profile.objects.get(user_id=user_id)
+    logged_in_user = Profile.objects.get(user=request.user)
+    context["profile"] = other_user
+
+    friend_request_exists = logged_in_user.friend_requests.filter(
+        user_id=other_user.user_id
+    )
+    if not friend_request_exists:
+        return redirect(reverse("profile", args=[username]))
+
+    # Handle GET request
+    if request.method == "GET":
+        # Accept friend request
+        if action == "accept":
+            logged_in_user.friend_requests.remove(other_user)
+            logged_in_user.friends.add(other_user)
+            other_user.friends.add(logged_in_user)
+
+        # Decline friend request
+        elif action == "decline":
+            logged_in_user.friend_requests.remove(other_user)
+
+        logged_in_user.save()
+        other_user.save()
+
+        return redirect(reverse("profile", args=[username]))
