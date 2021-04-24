@@ -63,3 +63,11 @@ def global_competition(request):
 def friends_competition(request):
     context = {"page_name": "Friends Competition"}
     return render(request, "portfoliohut/stream.html", context)
+
+
+def landing_page(request):
+    if request.method == "POST":
+        if "register_button" in request.POST:
+            return redirect(reverse("register"))
+
+    return render(request, "portfoliohut/landing.html", {})

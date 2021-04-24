@@ -4,7 +4,9 @@ from typing import Dict, List, Tuple
 
 import yfinance as yf
 
-TickerDetail = namedtuple("TickerDetail", ["ticker", "prices", "total_value"])
+TickerDetail = namedtuple(
+    "TickerDetail", ["ticker", "prices", "total_value", "website"]
+)
 
 
 def get_current_prices(stock_map: Dict[str, float]) -> Tuple[List[TickerDetail], float]:
@@ -22,8 +24,12 @@ def get_current_prices(stock_map: Dict[str, float]) -> Tuple[List[TickerDetail],
     result = []
     for ticker, quantity in stock_map.items():
         if quantity > 0:
-            ticker_price = yf.Ticker(ticker).info["regularMarketPreviousClose"]
-            ticker_detail = TickerDetail(ticker, ticker_price, ticker_price * quantity)
+            ticker_info = yf.Ticker(ticker).info
+            ticker_price = ticker_info["regularMarketPreviousClose"]
+            ticker_website = ticker_info["website"]
+            ticker_detail = TickerDetail(
+                ticker, ticker_price, ticker_price * quantity, ticker_website
+            )
             total += ticker_detail.total_value
             result.append(ticker_detail)
 

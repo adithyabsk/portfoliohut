@@ -65,13 +65,15 @@
 
         <!-- Top 5 Stocks -->
         <br/><h3>Top Investments</h3>
+
           <table class="row m-3">
             <tr>
-              <td><img src="https://logo.clearbit.com/netflix.com?size=100"></td>
-              <td><img src="https://logo.clearbit.com/homedepot.com?size=100"></td>
-              <td><img src="https://logo.clearbit.com/dickssportinggoods.com?size=100"></td>
-              <td><img src="https://logo.clearbit.com/google.com?size=100"></td>
-              <td><img src="https://logo.clearbit.com/tesla.com?size=100"></td>
+              {% for stock in  top_stocks %}
+              <td>
+              <img src = "{{stock}}">
+              </td>
+              {% endfor %}
+
             </tr>
           </table>
 

@@ -244,5 +244,11 @@ class Profile(models.Model):
 
         return stock_transactions_table, cash_transactions_table
 
+    def top_stocks(self):
+        stocks, total, _ = self.get_portfolio_details()
+        sorted_stocks = sorted(stocks, key=lambda x: x.total_value, reverse=True)
+        top_5_stocks = sorted_stocks[0:4]
+        return top_5_stocks
+
     def __str__(self):
         return f"user={self.user.get_full_name()}"

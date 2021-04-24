@@ -1,6 +1,7 @@
 <!DOCTYPE html>
 <html lang="en">
   <head>
+    {% load static %}
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <meta http-equiv="X-UA-Compatible" content="ie=edge" />
@@ -41,12 +42,17 @@
         <div class="w-full flex-grow lg:flex lg:items-center lg:w-auto hidden mt-2 lg:mt-0 bg-white lg:bg-transparent text-black p-4 lg:p-0 z-20" id="nav-content">
           <ul class="list-reset lg:flex justify-end flex-1 items-center">
           </ul>
+          <form method="post">
+            {% csrf_token %}
+
           <button
+            name = "register_button"
             id="navAction"
             class="mx-auto lg:mx-0 hover:underline bg-white text-gray-800 font-bold rounded-full mt-4 lg:mt-0 py-4 px-8 shadow opacity-75 focus:outline-none focus:shadow-outline transform transition hover:scale-105 duration-300 ease-in-out"
           >
-            Login
+            Register
           </button>
+        </form>
         </div>
       </div>
       <hr class="border-b border-gray-100 opacity-25 my-0 py-0" />
@@ -63,9 +69,6 @@
           <p class="leading-normal text-2xl mb-8">
             Analyse how your portfolio is compared to your friends and leading market indices!
           </p>
-          <button class="mx-auto lg:mx-0 hover:underline bg-white text-gray-800 font-bold rounded-full my-6 py-4 px-8 shadow-lg focus:outline-none focus:shadow-outline transform transition hover:scale-105 duration-300 ease-in-out">
-            Register
-          </button>
         </div>
         <!--Right Col-->
         <div class="w-full md:w-3/5 py-6 text-center">

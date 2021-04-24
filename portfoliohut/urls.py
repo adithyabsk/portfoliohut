@@ -7,6 +7,7 @@ from portfoliohut.views import (
     friends_competition,
     global_competition,
     index,
+    landing_page,
     logged_in_user_profile,
     login_action,
     logout_action,
@@ -36,4 +37,5 @@ urlpatterns = [
         respond_to_friend_request,
         name="respond-to-friend-request",
     ),
+    path("landing_page", landing_page, name="landing_page"),
 ]
