@@ -1,6 +1,23 @@
 """PortfolioHut models"""
 
 from .profile import Profile
-from .transactions import CashBalance, Stock, StockTable
+from .transactions import (
+    EquityInfo,
+    FinancialItem,
+    HistoricalEquity,
+    PortfolioItem,
+    PortfolioReturn,
+    Transaction,
+    TransactionTable,
+)
 
-__all__ = ["Profile", "Stock", "CashBalance", "StockTable"]
+__all__ = [
+    "Profile",
+    "Transaction",
+    "PortfolioItem",
+    "HistoricalEquity",
+    "EquityInfo",
+    "PortfolioReturn",
+    "TransactionTable",
+    "FinancialItem",
+]

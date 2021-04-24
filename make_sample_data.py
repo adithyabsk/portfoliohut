@@ -6,7 +6,12 @@ import pandas_market_calendars as mcal
 import pytz
 import yfinance as yf
 from django.contrib.auth.hashers import make_password
-from django.db import migrations, transaction
+from django.contrib.auth.models import User
+from django.db import transaction
+
+from portfoliohut.models import FinancialItem, Profile, Transaction
+
+FinancialActionType = FinancialItem.FinancialActionType
 
 TZ = pytz.timezone("UTC")
 
@@ -32,7 +37,7 @@ tech_stock_list = [
 ]
 
 
-def create_random_user(seed: int, User, Profile, CashBalance, Stock):
+def create_random_user(seed: int):
     """Create data for a demo user.
 
     Username and password are demo{seed}.
@@ -58,14 +63,19 @@ def create_random_user(seed: int, User, Profile, CashBalance, Stock):
         profile = Profile(user=user)
         profile.save()
 
-    # Add Cash Balance
+    # Add Deposit
     initial_balance = 100_000.00
     with transaction.atomic():
-        cb_action = "deposit"
-        cb_date = datetime(year=2020, month=1, day=1, tzinfo=TZ)
-        cb_value = initial_balance
-        CashBalance(
-            profile=profile, action=cb_action, date_time=cb_date, value=cb_value
+        transaction_date = datetime(
+            year=2020, month=1, day=1, hour=16, minute=0, tzinfo=TZ
+        )
+        Transaction(
+            profile=profile,
+            type=FinancialActionType.EXTERNAL_CASH,
+            date=transaction_date.date(),
+            time=transaction_date.time(),
+            price=initial_balance,
+            quantity=1,
         ).save()
 
     # Add stocks actions
@@ -87,7 +97,7 @@ def create_random_user(seed: int, User, Profile, CashBalance, Stock):
             ).to_pydatetime()
         )
         stock_dates = [sd.replace(tzinfo=TZ) for sd in stock_dates]
-        stock_actions = ["buy"] * unique_ticker_count + ["sell", "buy"] * sell_buy_count
+        stock_actions = [1] * unique_ticker_count + [-1, 1] * sell_buy_count
         stock_prices = [
             yf.Ticker(ticker)
             .history(start=date, end=date + timedelta(1), interval="1d")["Close"]
@@ -107,30 +117,33 @@ def create_random_user(seed: int, User, Profile, CashBalance, Stock):
         for st, sd, sa, sq, sp in zip(
             stock_tickers, stock_dates, stock_actions, stock_quantities, stock_prices
         ):
-            Stock(
+            # stock action
+            Transaction(
                 profile=profile,
                 ticker=st,
-                action=sa,
-                date_time=sd,
+                type=FinancialActionType.EQUITY,
+                date=sd.date(),
+                time=sd.time(),
                 price=sp,
-                quantity=sq,
+                quantity=sq * sa,
+            ).save()
+            # cash action
+            Transaction(
+                profile=profile,
+                ticker=st,
+                type=FinancialActionType.INTERNAL_CASH,
+                date=sd.date(),
+                time=sd.time(),
+                price=abs(sp * sq),
+                quantity=1 if sq > 0 else -1,
             ).save()
 
 
-def load_demo_user(apps, schema_editor):
-    number_users = 2
-    User = apps.get_model("auth", "User")
-    Profile = apps.get_model("portfoliohut", "Profile")
-    CashBalance = apps.get_model("portfoliohut", "CashBalance")
-    Stock = apps.get_model("portfoliohut", "Stock")
+def load_demo_user():
+    number_users = 3
     for i in range(1, number_users + 1):
-        create_random_user(i, User, Profile, CashBalance, Stock)
+        create_random_user(i)
 
 
-class Migration(migrations.Migration):
-
-    dependencies = [
-        ("portfoliohut", "0003_auto_20210412_1413"),
-    ]
-
-    operations = [migrations.RunPython(load_demo_user)]
+if __name__ == "__main__":
+    load_demo_user()

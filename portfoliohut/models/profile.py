@@ -13,7 +13,7 @@ from django.utils.timezone import now
 
 from portfoliohut.finance import get_current_prices
 
-from .transactions import Stock
+from .transactions import Transaction
 
 PROFILE_TYPE_ACTIONS = (
     ("public", "PUBLIC"),
@@ -79,7 +79,7 @@ def _build_stock_lookup(
     return prices_df
 
 
-def _calc_returns(stock_qset: "QuerySet[Stock]", stock_lookup: pd.DataFrame):
+def _calc_returns(stock_qset: "QuerySet[Transaction]", stock_lookup: pd.DataFrame):
     """Compute the returns for a given query set of of stock transactions.
 
     Assumes that the qset is ordered by increasing dates.
