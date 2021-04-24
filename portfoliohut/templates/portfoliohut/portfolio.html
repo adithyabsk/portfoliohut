@@ -3,6 +3,7 @@
   <title>Profile</title>
 {% endblock head %}
 {% load render_table from django_tables2 %}
+{% load mathfilters %}
 
 <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/css/bootstrap.min.css"/>
 
@@ -15,30 +16,23 @@
       <h2 class="text-center">{{ profile.user.username }}</h2>
     </div>
 
+    <!-- Graph -->
     <script src="http://d3js.org/d3.v3.min.js" charset="utf-8"></script>
+    {% if graph %}
+      {{ graph|safe }}
+    {% endif %}
 
-{% if graph %}
-{{ graph|safe }}
-
-
-    <!-- Add/Delete Transaction -->
-    <a href="{% url 'add-transaction'%}" class="m-2 d-flex justify-content-center">
-      <button type="submit" class="btn btn-primary">Add Transaction</button>
-    </a>
-
-  <!-- TODO: Add Table of transactions -- staticfiles
-  TODO: Add portfolio Table  -->
-  <br>
-  <div name="Profile Table" style="margin:auto; margin-top:2.5em">
+    <!-- Current Portfolio Summary -->
     <h4 style="margin:center; text-align:center;">Current Portfolio Summary</h4>
-
+    <div name="Profile Table" style="margin:auto; margin-top:2.5em">
     <table class="table table-hover">
       <thead>
       <tr>
         <th scope="col"></th>
         <th scope="col">Ticker</th>
+        <th scope="col">Quantity</th>
         <th scope="col">Current Price</th>
-        <th scope="col">Value</th>
+        <th scope="col">Current Value</th>
       </tr>
       </thead>
       <tbody>
@@ -46,29 +40,79 @@
         <tr>
           <th scope="row">{{ forloop.counter }}</th>
           <td>{{ entry.0 }}</td>
+          <td>{{ entry.2|div:entry.1|floatformat:0 }}</td>
           <td>{{ entry.1 }}</td>
           <td>{{ entry.2 |floatformat:-2 }}</td>
         </tr>
       {% endfor %}
       </tbody>
     </table>
-    <h5>Total Portfolio Value(USD): {{ total }}</h5>
-
-    <br>
-    <h5>Total Cash Balance is: {{ cash }}</h5>
-    <br>
-    <br>
-    <h4 style="text-align:center">Transaction History</h4>
-    <div name="transactions table" style="margin-top:.75em">
     </div>
-    {% render_table table %}
 
+    <!-- Summary Statistics -->
+    <h5>Portfolio Value: {{ total }}</h5>
+    <h5>Current Cash Balance: {{ cash }}</h5>
+    <br>
+    <br>
+
+    <!-- Transaction History -->
+    <h4 style="text-align:center">Transaction History</h4>
+    <div name="transactions table" style="margin-top:.75em"></div>
+    <table class="table table-hover">
+      <thead>
+      <tr>
+        <th scope="col">Action</th>
+        <th scope="col">Ticker</th>
+        <th scope="col">Quantity</th>
+        <th scope="col">Price</th>
+        <th scope="col">Date/Time</th>
+        <th scope="col">Edit</th>
+      </tr>
+      </thead>
+
+      <tbody>
+        {% for transaction in transactions %}
+          <tr>
+            <td>{{ transaction.action|upper }}</td>
+
+            {% if transaction.ticker %}
+              <td>{{ transaction.ticker }}</td>
+            {% else %}
+              <td>--CASH--</td>
+            {% endif %}
+
+            {% if transaction.quantity %}
+              <td>{{ transaction.quantity }}</td>
+            {% else %}
+              <td>--</td>
+            {% endif %}
+
+            {% if transaction.price %}
+              <td>{{ transaction.price }}</td>
+            {% else %}
+              <td>{{ transaction.value }}</td>
+            {% endif %}
+
+            <td>{{ transaction.date_time }}</td>
+
+            <td><button class="btn btn-primary">Delete</button></td>
+          </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+    </div>
+
+    <!-- Django Table2 -->
+    <!--{% render_table table %}-->
+
+    <!-- Add Transaction -->
+    <a href="{% url 'add-transaction'%}" class="m-2 d-flex justify-content-center">
+      <button type="submit" class="btn btn-primary">Add Transaction</button>
+    </a>
+    <br>
+
+  <!-- End of container-->
   </div>
-
-
-
-</div>
-{% endif %}
 
 
 {% endblock content %}

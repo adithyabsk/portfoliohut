@@ -5,7 +5,7 @@ import plotly.express as px
 from django.contrib.auth.decorators import login_required
 from django.shortcuts import get_object_or_404, render
 
-from portfoliohut.models import Profile, StockTable
+from portfoliohut.models import CashBalance, Profile, Stock, StockTable
 
 
 @login_required
@@ -17,13 +17,24 @@ def portfolio(request):
     if request.method == "GET":
         profile = get_object_or_404(Profile, user=request.user)
 
+        # Get current stock holdings
         stocks, total, cash_balance = profile.get_portfolio_details()
+
+        # Get all transactions
+        stock_transactions = Stock.objects.filter(profile=request.user.profile)
+        cash_transactions = CashBalance.objects.filter(profile=request.user.profile)
+        transactions = sorted(
+            chain(stock_transactions, cash_transactions),
+            key=lambda item: item.date_time,
+            reverse=True,
+        )
 
         stock_transactions_table, cash_transactions_table = profile.table_query_sets()
         records = chain(stock_transactions_table, cash_transactions_table)
         table = StockTable(records)
         table.paginate(page=request.GET.get("page", 1), per_page=25)
 
+        # Build graph
         graph_data = profile.get_cumulative_returns()
         dates = []
         for d in list(graph_data.index):
@@ -35,10 +46,10 @@ def portfolio(request):
         # TODO: Change hardcoded data
         s_p_returns = returns.multiply(10)
         data = pd.concat(data, axis=1)
-        data["User"] = "My portfolio"
+        data["User"] = str(request.user.username)
         sp_data = {"Date": dates, "Returns": s_p_returns}
         sp_data = pd.concat(sp_data, axis=1)
-        sp_data["User"] = "Index(S&P 500)"
+        sp_data["User"] = "S&P 500"
         complete_data = pd.concat([data, sp_data], ignore_index=True)
         fig = px.line(complete_data, x="Date", y="Returns", color="User")
         fig.update_xaxes(
@@ -65,6 +76,7 @@ def portfolio(request):
                 "profile_table": stocks,
                 "total": "${:,.2f}".format(total),
                 "table": table,
+                "transactions": transactions,
                 "cash": "${:,.2f}".format(cash_balance),
                 "graph_dates": dates,
                 "graph_returns": returns,

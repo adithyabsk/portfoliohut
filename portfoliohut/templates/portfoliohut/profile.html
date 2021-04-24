@@ -88,11 +88,9 @@
                 <span>Pending Friend Requests</span>
                   <ul>
                     {% for friend_request in profile.friend_requests.all %}
-                      <li>
-                        <a href="{% url 'profile' friend_request.user.username %}" class="friend">{{ friend_request.user.username }}</a>
-                        <button class="btn btn-primary">Accept</button>
-                        <button class="btn btn-primary">Decline</button>
-                      </li>
+                      <li><a href="{% url 'profile' friend_request.user.username %}" class="friend">
+                        {{ friend_request.user.username }}
+                      </a></li>
                     {% endfor %}
                   </ul>
               </ul>
@@ -106,12 +104,11 @@
               <ul>
                 {% for friend in profile.friends.all %}
                   <li><a href="{% url 'profile' friend.user.username %}" class="friend">
-                    {{ friend.username }}
+                    {{ friend.user.username }}
                   </a></li>
-                {% endfor %}
-                {% if not profile.friend.all %}
+                {% empty %}
                   <li>No friends yet</li>
-                {% endif %}
+                {% endfor %}
               </ul>
             </ul>
           </div>
