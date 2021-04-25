@@ -55,9 +55,12 @@ class Transaction(FinancialItem):
         items = super().display_items()
         items.append(f"profile={self.profile.user.get_full_name()}")
         if self.type == FinancialItem.FinancialActionType.EQUITY:
-            items.extend([f"ticker={self.ticker}"])
-        elif self.type in CASH:
-            action = "deposit" if self.quantity > 0 else "withdrawal"
+            items.append(f"ticker={self.ticker}")
+        elif self.type == FinancialItem.FinancialActionType.EXTERNAL_CASH:
+            action = "cash_deposit" if self.quantity > 0 else "cash_withdrawal"
+            items.append(f"{action}={self.price}")
+        elif self.type == FinancialItem.FinancialActionType.INTERNAL_CASH:
+            action = "cash_sale" if self.quantity > 0 else "cash_purchase"
             items.append(f"{action}={self.price}")
 
         return items

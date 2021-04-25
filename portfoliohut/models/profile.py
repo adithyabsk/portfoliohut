@@ -7,13 +7,9 @@ import yfinance as yf
 from django.contrib.auth.models import User
 from django.db import models
 from django.db.models import CharField, F, QuerySet, Value
-from django.db.models.fields import DateField
-from django.db.models.functions import Cast
 from django.utils.timezone import now
 
-from portfoliohut.finance import get_current_prices
-
-from .transactions import Transaction
+from .transactions import FinancialItem, Transaction
 
 PROFILE_TYPE_ACTIONS = (
     ("public", "PUBLIC"),
@@ -95,7 +91,7 @@ def _calc_returns(stock_qset: "QuerySet[Transaction]", stock_lookup: pd.DataFram
     """
     # Strip timezone and just get the date
     # all timezones are UTC so we don't need that information in here
-    start_date = stock_qset.first().date_time.replace(tzinfo=None).date()
+    start_date = stock_qset.first().date
     today = now().date()
     date_range = pd.date_range(start=start_date, end=today, freq="D").date.tolist()
     portfolio = defaultdict(int)
@@ -104,8 +100,7 @@ def _calc_returns(stock_qset: "QuerySet[Transaction]", stock_lookup: pd.DataFram
     sale_cash = 0
 
     # Don't need to convert this to a set since the query set supports the in operation
-    stock_qset = stock_qset.annotate(date_only=Cast("date_time", DateField()))
-    portfolio_dates_set = stock_qset.values_list("date_only", flat=True).distinct()
+    portfolio_dates_set = stock_qset.values_list("date", flat=True).distinct()
 
     # Assume that the balance and tickers are validated and you never
     # over extend yourself. Also does not take into account purchasing
@@ -117,13 +112,12 @@ def _calc_returns(stock_qset: "QuerySet[Transaction]", stock_lookup: pd.DataFram
         cash_mod = 0
         if date in portfolio_dates_set:
             # Update portfolio
-            stock_on_date_qset = stock_qset.filter(date_only=date)
+            stock_on_date_qset = stock_qset.filter(date=date)
             for stock in stock_on_date_qset:
                 # Add shares if buying otherwise subtract shares
-                share_count = stock.quantity * (1 if stock.action == "buy" else -1)
-                portfolio[stock.ticker] += share_count
-                if stock.action == "sell":  # selling locks in gains
-                    cash_mod += float(stock.quantity * stock.price)
+                portfolio[stock.ticker] += stock.quantity
+                if stock.quantity < 0:  # selling locks in gains
+                    cash_mod += float(-stock.quantity * stock.price)
 
         # sale cash is all amount total sold
         # cash mod handles current amount sold
@@ -180,10 +174,11 @@ class Profile(models.Model):
     )
 
     def get_returns_df(self) -> pd.Series:
-        stocks_qset = self.stock_set.order_by("date_time")
+        stocks_qset = self.transaction_set.filter(
+            type=FinancialItem.FinancialActionType.EQUITY
+        ).order_by("date", "time")
 
-        # EVIE'S ADDITIONS
-        if len(stocks_qset) == 0:
+        if not stocks_qset.exists():
             return pd.Series()
 
         # We need order_by here because SQL is finicky
@@ -206,30 +201,30 @@ class Profile(models.Model):
         else:
             return float("nan")
 
-    def get_portfolio_details(self):
-        # we are not using a query set here because we need to compute the final portfolio from the
-        # list of transactions which gives us something that is not a "django model"
-        final_portfolio = defaultdict(int)
-        # Query the database
-        all_stock_transactions = self.stock_set.all()
-        cash_balance = 0
-        for transaction in all_stock_transactions:
-            if transaction.action.upper() == "BUY":
-                final_portfolio[transaction.ticker] += transaction.quantity
-                cash_balance -= transaction.price * transaction.quantity
-            else:
-                final_portfolio[transaction.ticker] -= transaction.quantity
-                cash_balance += transaction.price * transaction.quantity
-
-        all_cash_transactions = self.cashbalance_set.all()
-        for transaction in all_cash_transactions:
-            if transaction.action.upper() == "DEPOSIT":
-                cash_balance += transaction.value
-            else:
-                cash_balance -= transaction.value
-
-        stocks, total = get_current_prices(final_portfolio)
-        return stocks, total, cash_balance
+    # def get_portfolio_details(self):
+    #     # we are not using a query set here because we need to compute the final portfolio from the
+    #     # list of transactions which gives us something that is not a "django model"
+    #     final_portfolio = defaultdict(int)
+    #     # Query the database
+    #     all_transactions = self.transaction_set.all()
+    #     cash_balance = 0
+    #     for transaction in all_stock_transactions:
+    #         if transaction.action.upper() == "BUY":
+    #             final_portfolio[transaction.ticker] += transaction.quantity
+    #             cash_balance -= transaction.price * transaction.quantity
+    #         else:
+    #             final_portfolio[transaction.ticker] -= transaction.quantity
+    #             cash_balance += transaction.price * transaction.quantity
+    #
+    #     all_cash_transactions = self.cashbalance_set.all()
+    #     for transaction in all_cash_transactions:
+    #         if transaction.action.upper() == "DEPOSIT":
+    #             cash_balance += transaction.value
+    #         else:
+    #             cash_balance -= transaction.value
+    #
+    #     stocks, total = get_current_prices(final_portfolio)
+    #     return stocks, total, cash_balance
 
     def table_query_sets(self):
         # Write logic for pagination and transactions table
@@ -244,11 +239,11 @@ class Profile(models.Model):
 
         return stock_transactions_table, cash_transactions_table
 
-    def top_stocks(self):
-        stocks, total, _ = self.get_portfolio_details()
-        sorted_stocks = sorted(stocks, key=lambda x: x.total_value, reverse=True)
-        top_5_stocks = sorted_stocks[0:4]
-        return top_5_stocks
+    # def top_stocks(self):
+    #     stocks, total, _ = self.get_portfolio_details()
+    #     sorted_stocks = sorted(stocks, key=lambda x: x.total_value, reverse=True)
+    #     top_5_stocks = sorted_stocks[0:4]
+    #     return top_5_stocks
 
     def __str__(self):
         return f"user={self.user.get_full_name()}"

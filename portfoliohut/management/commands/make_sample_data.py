@@ -135,7 +135,7 @@ def create_random_user(seed: int):
                 date=sd.date(),
                 time=sd.time(),
                 price=abs(sp * sq),
-                quantity=1 if sq > 0 else -1,
+                quantity=1 if sq < 0 else -1,
             ).save()
 
 

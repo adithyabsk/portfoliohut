@@ -26,11 +26,11 @@ def profile(request, username):
     profile = Profile.objects.get(user_id=user_id)
     context["profile"] = profile
 
-    top_stocks = profile.top_stocks()
+    # top_stocks = profile.top_stocks()
     stocks_urls = []
-    base_url = "https://logo.clearbit.com/"
-    for stock in top_stocks:
-        stocks_urls.append(base_url + stock.website + "?size = 100")
+    # base_url = "https://logo.clearbit.com/"
+    # for stock in top_stocks:
+    #     stocks_urls.append(base_url + stock.website + "?size = 100")
 
     context["top_stocks"] = stocks_urls
     # Handle GET request
