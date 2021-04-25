@@ -4,6 +4,7 @@ from django.contrib.auth.decorators import login_required
 from django.shortcuts import redirect, render
 from django.urls import reverse
 
+from portfoliohut.graph import combine_data, multi_plot
 from portfoliohut.models import Profile
 
 NUM_LEADERS = 5
@@ -68,15 +69,27 @@ def friends_competition(request):
     friends_profiles = Profile.objects.filter(friends__pk=request.user.profile.id)
     unsorted_friends_profiles = friends_profiles.all()
     annotated_profiles = []
+    friends_series = []
+    friends_names = []
 
     # Get friend's portfolio returns
     for profile in unsorted_friends_profiles:
         profile.returns = profile.get_most_recent_return()
         annotated_profiles.append(profile)
+        friend_returns = profile.get_cumulative_returns()
+        friends_series.append(friend_returns)
+        friends_names.append(profile.user.first_name + " " + profile.user.last_name)
 
     # Get my portfolio returns
     my_profile.returns = my_profile.get_most_recent_return()
     annotated_profiles.append(my_profile)
+
+    user_returns = my_profile.get_cumulative_returns()
+    # TODO : Change me  ###
+    index_returns = user_returns.multiply(10)
+    merged_df = combine_data(friends_series, friends_names, user_returns, index_returns)
+    graph = multi_plot(merged_df)
+    context["graph"] = graph
 
     # Sort public profiles by their percent returns
     profiles = sorted(

@@ -13,6 +13,13 @@
       <h1 class="text-center" id="id_page_name">{{ page_name }}</h1>
     </div>
 
+    {% if graph %}
+
+      {{ graph|safe }}
+
+    {% endif %}
+
+
     <!-- Leaderboard -->
     <div class="row m-3 d-flex justify-content-center">
       <table class="table table-hover">
