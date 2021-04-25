@@ -7,14 +7,14 @@ import pytz
 import yfinance as yf
 from django.contrib.auth.hashers import make_password
 from django.contrib.auth.models import User
+from django.core.management import BaseCommand
 from django.db import transaction
+from tqdm import tqdm
 
 from portfoliohut.models import FinancialItem, Profile, Transaction
 
 FinancialActionType = FinancialItem.FinancialActionType
-
 TZ = pytz.timezone("UTC")
-
 tech_stock_list = [
     "AAPL",
     "ADI",
@@ -139,11 +139,14 @@ def create_random_user(seed: int):
             ).save()
 
 
-def load_demo_user():
+def load_demo_users():
     number_users = 3
-    for i in range(1, number_users + 1):
+    for i in tqdm(range(1, number_users + 1)):
         create_random_user(i)
 
 
-if __name__ == "__main__":
-    load_demo_user()
+class Command(BaseCommand):
+    help = "Create fake data for portfoliohut."
+
+    def handle(self, *args, **kwargs):
+        load_demo_users()

@@ -9,3 +9,4 @@ pandas==1.2.3
 pandas-market-calendars==1.6.1
 django-mathfilters==1.0.0
 plotly==4.14.3
+tqdm==4.60.0

@@ -22,6 +22,12 @@ $ source ./venv/bin/activate
 (venv) $ pre-commit install # runs before each commit you make
 ```
 
+Add sample data
+
+```shell
+(venv) $ python manage.py make_sample_data
+```
+
 Running the server
 
 ```shell
