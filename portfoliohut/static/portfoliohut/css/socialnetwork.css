@@ -1,11 +1,12 @@
 /* https://stackoverflow.com/a/22196760/3262054 */
-.jumbotron.vertical-center {
-  margin-bottom: 0;
-}
 /* Account for the navbar which is why it is 80% */
 .vertical-center {
   min-height: 80%;
   min-height: 80vh;
-  display: flex;
+  /*display: flex;*/
   align-items: center;
+}
+
+body {
+  overflow-y:scroll;
 }

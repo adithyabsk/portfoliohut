@@ -1,20 +1,12 @@
 import math
 
 from django.contrib.auth.decorators import login_required
-from django.shortcuts import redirect, render
-from django.urls import reverse
+from django.shortcuts import render
 
 from portfoliohut.graph import combine_data, multi_plot
 from portfoliohut.models import Profile
 
 NUM_LEADERS = 5
-
-
-def index(request):
-    if request.user.is_authenticated:
-        return redirect(reverse("global-competition"))
-    else:
-        return redirect(reverse("login"))
 
 
 @login_required
@@ -106,8 +98,4 @@ def friends_competition(request):
 
 
 def landing_page(request):
-    if request.method == "POST":
-        if "register_button" in request.POST:
-            return redirect(reverse("register"))
-
-    return render(request, "portfoliohut/landing.html", {})
+    return render(request, "portfoliohut/landing.html")

@@ -2,7 +2,6 @@
 <!doctype html>
 <html lang="en">
 <head>
-
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
 
@@ -15,8 +14,9 @@
     {% block head %}
     {% endblock head %}
 
-    <nav class="navbar navbar-light bg-light">
+    <nav class="navbar navbar-light bg-light navbar-expand-lg">
         <div class="container-fluid">
+            {% url "landing-page" as landing_page %}
             {% url "global-competition" as global_competition_url %}
             {% url "friends-competition" as friends_competition_url %}
             {% url "logged-in-user-profile" as profile_url %}
@@ -26,23 +26,27 @@
             {% url "logout" as logout_url %}
             {% url "register" as register_url %}
 
-            <a class="navbar-brand" href="{{ global_competition_url }}">[PortfolioHut]</a>
-            {% if login_url == request.path %}
-                <a href="{{ register_url }}" id="id_register_link">Register</a>
-            {% elif register_url == request.path %}
-                <a href="{{ login_url }}" id="id_login_link">Login</a>
-            {% elif request.user is not None %}
-                <a href="{{ profile_url }}" id="id_logged_in_user_name">{{ request.user.get_full_name }}</a>
-            {% endif %}
-
-            <button class="navbar-toggler ms-auto" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav"
+            <a class="navbar-brand" href="{{ landing_page }}">
+              <img src="{% static 'portfoliohut/images/logo.svg' %}" style="width: 200px">
+            </a>
+            <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav"
                     aria-controls="navbarNav" aria-expanded="false" aria-label="Toggle navigation" id="id_show_nav_button">
                 <span class="navbar-toggler-icon"></span>
             </button>
-
             <div class="collapse navbar-collapse" id="navbarNav">
                 <ul class="navbar-nav">
                     {# Setup showing which page is active #}
+                    {% if user.is_authenticated %}
+                      <li class="nav-item">
+                          <b>
+                          <a class="nav-link" href="{{ profile_url }}" id="id_logged_in_user_name">{{ request.user.get_full_name }}</a>
+                            </b>
+                      </li>
+                    {% else %}
+                      <li class="nav-item">
+                          <a class="nav-link" href="{{ login_url }}" id="id_nav_logout">Login</a>
+                      </li>
+                    {% endif %}
                     <li class="nav-item">
                         <a class="nav-link {% if global_competition_url in request.path %} active {%  endif %}"
                            href="{{ global_competition_url }}" id="id_nav_global_competition">Global Competition</a>
@@ -52,26 +56,22 @@
                            href="{{ friends_competition_url }}" id="id_nav_friends_competition">Friends Competition</a>
                     </li>
                     <li class="nav-item">
-                        <a class="nav-link {% if profile_url in request.path %} active {%  endif %}"
-                           href="{{ profile_url }}" id="id_nav_profile">My Profile</a>
-                    </li>
-                    <li class="nav-item">
                         <a class="nav-link {% if portfolio_url in request.path %} active {%  endif %}"
-                           href="{{ portfolio_url }}" id="id_nav_portfolio">My Investment Portfolio</a>
+                           href="{{ portfolio_url }}" id="id_nav_portfolio">My Portfolio</a>
                     </li>
                     <li class="nav-item">
                         <a class="nav-link {% if add_transaction_url in request.path %} active {%  endif %}"
                            href="{{ add_transaction_url }}" id="id_nav_add_transaction">Add Transaction</a>
                     </li>
-                    <li class="nav-item">
-                        <a class="nav-link {% if not user.is_authenticated %} disabled {%  endif %}"
-                           href="{{ logout_url }}" id="id_nav_logout">Logout</a>
-                    </li>
+                    {% if user.is_authenticated %}
+                      <li class="nav-item">
+                          <a class="nav-link" href="{{ logout_url }}" id="id_nav_logout">Logout</a>
+                      </li>
+                    {% endif %}
                 </ul>
             </div>
         </div>
     </nav>
-
 </head>
 <body>
 

@@ -10,6 +10,9 @@ from portfoliohut.models import Profile
 
 
 def login_action(request):
+    if request.user.is_authenticated:
+        return redirect(reverse("global-competition"))
+
     if request.method == "GET":
         return render(request, "portfoliohut/login.html", {"login_form": LoginForm()})
 
@@ -26,7 +29,7 @@ def login_action(request):
 
     login(request, user)
 
-    return redirect(reverse("index"))
+    return redirect(reverse("global-competition"))
 
 
 @login_required
