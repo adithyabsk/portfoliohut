@@ -13,7 +13,6 @@ from tqdm import tqdm
 
 from portfoliohut.models import FinancialItem, Profile, Transaction
 
-FinancialActionType = FinancialItem.FinancialActionType
 TZ = pytz.timezone("UTC")
 tech_stock_list = [
     "AAPL",
@@ -71,7 +70,7 @@ def create_random_user(seed: int):
         )
         Transaction(
             profile=profile,
-            type=FinancialActionType.EXTERNAL_CASH,
+            type=FinancialItem.FinancialActionType.EXTERNAL_CASH,
             date=transaction_date.date(),
             time=transaction_date.time(),
             price=initial_balance,
@@ -86,7 +85,10 @@ def create_random_user(seed: int):
         random.seed(seed)
         unique_ticker_count = 6
         sell_buy_count = 2
+        # Randomly pick stock tickers and repeat some of them for more buying and selling
         stock_tickers = random.choices(tech_stock_list, k=unique_ticker_count)
+        stock_tickers += stock_tickers[: 2 * sell_buy_count]
+        # Pick stock dates using the nyse to make sure that they are valid
         nyse = mcal.get_calendar("NYSE")
         stock_dates = sorted(
             pd.to_datetime(
@@ -121,7 +123,7 @@ def create_random_user(seed: int):
             Transaction(
                 profile=profile,
                 ticker=st,
-                type=FinancialActionType.EQUITY,
+                type=FinancialItem.FinancialActionType.EQUITY,
                 date=sd.date(),
                 time=sd.time(),
                 price=sp,
@@ -130,12 +132,12 @@ def create_random_user(seed: int):
             # cash action
             Transaction(
                 profile=profile,
-                ticker=st,
-                type=FinancialActionType.INTERNAL_CASH,
+                ticker="-",
+                type=FinancialItem.FinancialActionType.INTERNAL_CASH,
                 date=sd.date(),
                 time=sd.time(),
                 price=abs(sp * sq),
-                quantity=1 if sq < 0 else -1,
+                quantity=-sa,  # if sale balance goes up, for purchase balance goes down
             ).save()
 
 

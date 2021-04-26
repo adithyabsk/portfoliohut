@@ -95,6 +95,8 @@ class HistoricalEquityManager(models.Manager):
     def _add_historical_ticker_data(self, ticker: str, df: pd.DataFrame):
         if not df.empty:
             df = df.reset_index()
+            df = df.dropna(subset=["Open", "Close"])
+            df = df.where(pd.notnull(df), None)
             self.bulk_create(
                 [
                     self.model(

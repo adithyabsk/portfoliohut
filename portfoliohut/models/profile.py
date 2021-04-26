@@ -1,15 +1,9 @@
-from collections import defaultdict
-from typing import Optional
-
-import numpy as np
 import pandas as pd
-import yfinance as yf
 from django.contrib.auth.models import User
 from django.db import models
 from django.db.models import CharField, F, QuerySet, Value
-from django.utils.timezone import now
 
-from .transactions import FinancialItem, Transaction
+from .transactions import FinancialItem, HistoricalEquity, Transaction
 
 PROFILE_TYPE_ACTIONS = (
     ("public", "PUBLIC"),
@@ -17,149 +11,94 @@ PROFILE_TYPE_ACTIONS = (
 )
 
 
-# TODO (@eab148): Make sure that input dates for stocks are not before January 1st, 2000
-#                 or, we need to amend this algorithm
-def _build_stock_lookup(
-    tickers_qset: QuerySet[str], start_date: Optional[str] = "2000-01-01"
-) -> pd.DataFrame:
-    """Generate a lookup table with daily stock prices for a given portfolio.
-
-    The dataframe index will have the dates and the columns will be the tickers.
-
-                TSLA GOOG AAPL
-    2021-01-01  200  1232 123
-    2021-01-02  212  1233 100
-    ...
-    2021-03-28  ...
-
-    tickers: A queryset of valid tickers
-    start_date: The start date of the yfinance lookup
-
-    Return:
-        prices_df (pd.DataFrame)
-
-    """
-    # We append the data horizontally so that the uneven rows get back filled with NaNs
-    # automatically when we transpose the dataframe.
-    ticker_prices = []
-    for tic in tickers_qset:
-        ticker_org_data = yf.Ticker(tic).history(start=start_date, interval="1d")
-        ticker_prices.append(ticker_org_data["Close"])
-
-    prices_df = pd.DataFrame(data=ticker_prices).T
-    prices_df.columns = list(tickers_qset)
-    prices_df.index.name = "date"
-    prices_df.index = prices_df.index.normalize()
-
-    # Handle edge case where "today" is the weekend but the data only exists up to Friday
-    last_date = prices_df.index[-1]
-    if now().date() > last_date:
-        append_idx = pd.date_range(
-            start=last_date + pd.Timedelta(days=1), end=now().date(), freq="D"
-        )
-        append_cols = prices_df.columns
-        data = np.empty(
-            (
-                len(append_idx),
-                len(append_cols),
-            )
-        )
-        data[:] = prices_df.iloc[-1] * len(append_idx)
-        prices_df = prices_df.append(
-            pd.DataFrame(data=data, columns=append_cols, index=append_idx)
-        )
-
-    # Resample the dataframe to fill last known prices on days when the stock market is closed
-    prices_df = prices_df.resample("D").ffill()
-
-    return prices_df
-
-
-def _calc_returns(stock_qset: "QuerySet[Transaction]", stock_lookup: pd.DataFrame):
+def _calc_returns(transaction_qset: "QuerySet[Transaction]"):
     """Compute the returns for a given query set of of stock transactions.
 
     Assumes that the qset is ordered by increasing dates.
 
     Args:
         stock_qset: A queryset of stock transactions
-        stock_lookup: Output of `_build_stock_lookup`, a lookup table of tickers and prices on each
-            date.
 
     Returns:
         pd.Series: returns percentages with `pd.DateTimeIndex` as indices
 
     """
-    # Strip timezone and just get the date
-    # all timezones are UTC so we don't need that information in here
-    start_date = stock_qset.first().date
-    today = now().date()
-    date_range = pd.date_range(start=start_date, end=today, freq="D").date.tolist()
-    portfolio = defaultdict(int)
-    returns = []
-    prev_balance = None
-    sale_cash = 0
 
-    # Don't need to convert this to a set since the query set supports the in operation
-    portfolio_dates_set = stock_qset.values_list("date", flat=True).distinct()
+    # TODO: This won't work for multiple stock transactions of a single stock on the same day. I
+    #       need to find a solution for this case. This will likely involve a step where I combine
+    #       all stocks actions from a single day into a single row. (@adithysbk)
 
-    # Assume that the balance and tickers are validated and you never
-    # over extend yourself. Also does not take into account purchasing
-    # on margin.
+    # Filter for just internal cash transactions and equity transactions, then make sure to filter
+    # out all of the buy actions. This is NOT actually your portfolio value but respects the
+    # "locked" in gains
+    relevant_transaction_qset = transaction_qset.filter(
+        type__in=[
+            FinancialItem.FinancialActionType.EQUITY,
+            FinancialItem.FinancialActionType.INTERNAL_CASH,
+        ]
+    ).exclude(type=FinancialItem.FinancialActionType.INTERNAL_CASH, quantity__lt=0)
+    start_date = relevant_transaction_qset.first().date
+    # Remove cash balance ticker
+    distinct_tickers = set(
+        relevant_transaction_qset.filter(
+            type=FinancialItem.FinancialActionType.EQUITY
+        ).values_list("ticker", flat=True)
+    )
 
-    # We don't care about cash withdrawals or deposits but we do care about money that is earned
-    # through sales, we should keep that in our balances from a returns perspective.
-    for date in date_range:
-        cash_mod = 0
-        if date in portfolio_dates_set:
-            # Update portfolio
-            stock_on_date_qset = stock_qset.filter(date=date)
-            for stock in stock_on_date_qset:
-                # Add shares if buying otherwise subtract shares
-                portfolio[stock.ticker] += stock.quantity
-                if stock.quantity < 0:  # selling locks in gains
-                    cash_mod += float(-stock.quantity * stock.price)
+    if not distinct_tickers:
+        return pd.Series([], name="Returns")
 
-        # sale cash is all amount total sold
-        # cash mod handles current amount sold
-        sale_cash += cash_mod
-
-        # Base case for when no stock actions have been taken yet
-        if len(portfolio) == 0 and sale_cash == 0:
-            returns.append(np.nan)
-            continue
-
-        # Compute updated balance
-        curr_balance = (
-            sum(
-                [
-                    shares
-                    * stock_lookup.loc[
-                        date.isoformat(), ticker
-                    ]  # price (on that day) * quantity
-                    for ticker, shares in portfolio.items()
-                ]
-            )
-            + sale_cash
+    # Build a list of stock prices across all relevant dates
+    price_series_list = []
+    for ticker in distinct_tickers:
+        dates, closes = zip(
+            *HistoricalEquity.objects.get_ticker(ticker)
+            .filter(date__gte=start_date)
+            .values_list("date", "close")
         )
-        curr_return = np.nan
-        # If cashmod is zero this is the standard returns calculation, but if you sold stock, then
-        # we "lock-in" those gains into the returns calculation
-        if prev_balance is not None:
-            curr_return = (curr_balance - (prev_balance + cash_mod)) / (
-                prev_balance + cash_mod
+        price_series_list.append(pd.Series(closes, index=dates, name=ticker))
+    stocks_df = pd.concat(price_series_list, axis=1).sort_index()
+
+    # Build a DataFrame similar to previous with the cumulative quantities at each date.
+    quantity_series_list = []
+    for ticker in distinct_tickers:
+        dates, quantities = zip(
+            *relevant_transaction_qset.filter(ticker=ticker).values_list(
+                "date", "quantity"
             )
+        )
+        quantity_series_list.append(
+            pd.Series(quantities, index=dates, dtype="int64", name=ticker)
+        )
+    quantities_df = (
+        pd.concat(quantity_series_list, axis=1)
+        .sort_index()
+        .fillna(0)
+        .cumsum()
+        .reindex(stocks_df.index, method="ffill")
+        .astype("int64")
+    )
 
-        returns.append(curr_return)
-        prev_balance = curr_balance
+    # Also build the cumulative sale cash balance at each date.
+    sale_dates, sale_prices = zip(
+        *relevant_transaction_qset.filter(
+            type=FinancialItem.FinancialActionType.INTERNAL_CASH
+        ).values_list("date", "price")
+    )
+    sale_cash_series = (
+        pd.Series(sale_prices, index=sale_dates, name="Cash")
+        .cumsum()
+        .reindex(stocks_df.index, method="ffill")
+        .fillna(0)
+        .astype(float)
+    )
 
-    rslt = pd.Series(returns, date_range, name="Returns")
+    # Now, we simply multiply stocks_df by quantities_df and add sale_cash_df
+    returns_series = stocks_df.multiply(quantities_df).sum(axis=1).add(sale_cash_series)
+    returns_series.name = "Returns"
+    returns_series = returns_series.dropna().pct_change()
 
-    # If the results are all null, then we can just return an empty series
-    nonzero_ser = rslt[(rslt != 0) & ~rslt.isnull()]
-    if len(nonzero_ser) > 0:
-        return rslt.loc[nonzero_ser.index[0] :]
-    else:
-        return pd.Series([], name="Returns")  # emtpy
+    return returns_series
 
 
 class Profile(models.Model):
@@ -174,22 +113,7 @@ class Profile(models.Model):
     )
 
     def get_returns_df(self) -> pd.Series:
-        stocks_qset = self.transaction_set.filter(
-            type=FinancialItem.FinancialActionType.EQUITY
-        ).order_by("date", "time")
-
-        if not stocks_qset.exists():
-            return pd.Series()
-
-        # We need order_by here because SQL is finicky
-        # https://stackoverflow.com/a/10849214/3262054
-        tickers = (
-            stocks_qset.order_by("ticker").values_list("ticker", flat=True).distinct()
-        )
-        prices_df = _build_stock_lookup(tickers)
-        returns_series = _calc_returns(stocks_qset, prices_df)
-
-        return returns_series
+        return _calc_returns(self.transaction_set)
 
     def get_cumulative_returns(self) -> pd.Series:
         return (1 + self.get_returns_df()).cumprod() - 1
