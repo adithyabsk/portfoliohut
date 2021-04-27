@@ -1,9 +1,9 @@
 import pandas as pd
 from django.contrib.auth.models import User
 from django.db import models
-from django.db.models import CharField, F, QuerySet, Value
+from django.db.models import QuerySet
 
-from .transactions import FinancialItem, HistoricalEquity, Transaction
+from .transactions import FinancialActionType, HistoricalEquity, Transaction
 
 PROFILE_TYPE_ACTIONS = (
     ("public", "PUBLIC"),
@@ -17,7 +17,7 @@ def _calc_returns(transaction_qset: "QuerySet[Transaction]"):
     Assumes that the qset is ordered by increasing dates.
 
     Args:
-        stock_qset: A queryset of stock transactions
+        transaction_qset: A queryset of stock transactions
 
     Returns:
         pd.Series: returns percentages with `pd.DateTimeIndex` as indices
@@ -33,16 +33,16 @@ def _calc_returns(transaction_qset: "QuerySet[Transaction]"):
     # "locked" in gains
     relevant_transaction_qset = transaction_qset.filter(
         type__in=[
-            FinancialItem.FinancialActionType.EQUITY,
-            FinancialItem.FinancialActionType.INTERNAL_CASH,
+            FinancialActionType.EQUITY,
+            FinancialActionType.INTERNAL_CASH,
         ]
-    ).exclude(type=FinancialItem.FinancialActionType.INTERNAL_CASH, quantity__lt=0)
+    ).exclude(type=FinancialActionType.INTERNAL_CASH, quantity__lt=0)
     start_date = relevant_transaction_qset.first().date
     # Remove cash balance ticker
     distinct_tickers = set(
-        relevant_transaction_qset.filter(
-            type=FinancialItem.FinancialActionType.EQUITY
-        ).values_list("ticker", flat=True)
+        relevant_transaction_qset.filter(type=FinancialActionType.EQUITY).values_list(
+            "ticker", flat=True
+        )
     )
 
     if not distinct_tickers:
@@ -82,7 +82,7 @@ def _calc_returns(transaction_qset: "QuerySet[Transaction]"):
     # Also build the cumulative sale cash balance at each date.
     sale_dates, sale_prices = zip(
         *relevant_transaction_qset.filter(
-            type=FinancialItem.FinancialActionType.INTERNAL_CASH
+            type=FinancialActionType.INTERNAL_CASH
         ).values_list("date", "price")
     )
     sale_cash_series = (
@@ -150,18 +150,18 @@ class Profile(models.Model):
     #     stocks, total = get_current_prices(final_portfolio)
     #     return stocks, total, cash_balance
 
-    def table_query_sets(self):
-        # Write logic for pagination and transactions table
-        stock_transactions_table = self.stock_set.all().order_by("date_time")
-        cash_transactions_table = self.cashbalance_set.all().order_by("date_time")
-
-        cash_transactions_table = cash_transactions_table.annotate(
-            price=F("value"), ticker=Value("--Cash--", output_field=CharField())
-        ).values("price", "action", "date_time", "ticker")
-
-        cash_transactions_table = cash_transactions_table.order_by("date_time")
-
-        return stock_transactions_table, cash_transactions_table
+    # def table_query_sets(self):
+    #     # Write logic for pagination and transactions table
+    #     stock_transactions_table = self.stock_set.all().order_by("date_time")
+    #     cash_transactions_table = self.cashbalance_set.all().order_by("date_time")
+    #
+    #     cash_transactions_table = cash_transactions_table.annotate(
+    #         price=F("value"), ticker=Value("--Cash--", output_field=CharField())
+    #     ).values("price", "action", "date_time", "ticker")
+    #
+    #     cash_transactions_table = cash_transactions_table.order_by("date_time")
+    #
+    #     return stock_transactions_table, cash_transactions_table
 
     # def top_stocks(self):
     #     stocks, total, _ = self.get_portfolio_details()

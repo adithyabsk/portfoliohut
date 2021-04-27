@@ -1,12 +1,19 @@
 from datetime import timedelta
+from decimal import Decimal
+from typing import TYPE_CHECKING, List
 
 import django_tables2 as tables
 import pandas as pd
 import pandas_market_calendars as mcal
 import yfinance as yf
-from django.db import models
+from django.core.validators import MinValueValidator
+from django.db import models, transaction
+from django.db.models import F, Sum
 from django.utils import timezone
 from django.utils.translation import gettext_lazy as _
+
+if TYPE_CHECKING:
+    from .profile import Profile
 
 
 class FinancialItem(models.Model):
@@ -31,15 +38,118 @@ class FinancialItem(models.Model):
         return ", ".join(self.display_items())
 
 
+FinancialActionType = FinancialItem.FinancialActionType
 CASH = (
-    FinancialItem.FinancialActionType.EXTERNAL_CASH,
-    FinancialItem.FinancialActionType.INTERNAL_CASH,
+    FinancialActionType.EXTERNAL_CASH,
+    FinancialActionType.INTERNAL_CASH,
 )
 
 
-class Transaction(FinancialItem):
-    """An individual transaction."""
+# TODO: Technically this can be optimized since we only really need to update the particular items
+#       that were updated. We don't really need to delete all of the portfolio items. We just need
+#       to recompute the particular ticker as well as the cash balance.
+class TransactionManager(models.Manager):
+    def _reset_portfolio_cache(self, profile: "Profile"):
+        with transaction.atomic():
+            # Delete previous snapshot
+            profile.portfolioitem_set.all().delete()
+            # Figure out current average price (group by ticker and then annotate weighted average price)
+            item_dicts = (
+                profile.transaction_set.filter(type=FinancialActionType.EQUITY)
+                .values("ticker")
+                .order_by("ticker")
+                .annotate(
+                    total_quantity=Sum("quantity"),
+                    average_price=Sum(
+                        (F("quantity") * F("price")), output_field=models.DecimalField()
+                    )
+                    / Sum("quantity", output_field=models.DecimalField()),
+                )
+            )
+            PortfolioItem.objects.bulk_create(
+                [
+                    PortfolioItem(
+                        profile=profile,
+                        type=FinancialActionType.EQUITY,
+                        ticker=d.get("ticker"),
+                        quantity=d.get("total_quantity"),
+                        price=d.get("average_price"),
+                    )
+                    for d in item_dicts
+                ]
+            )
+            total_price = (
+                profile.transaction_set.filter(type__in=CASH)
+                .values("quantity", "price")
+                .aggregate(
+                    total_price=Sum(
+                        (F("quantity") * F("price")), output_field=models.DecimalField()
+                    )
+                )["total_price"]
+            )
+            PortfolioItem(
+                ticker="-",
+                profile=profile,
+                type=FinancialActionType.EXTERNAL_CASH,
+                quantity=1 if total_price > 0 else -1,
+                price=abs(total_price),
+            ).save()
 
+    def _create_equity_transaction(self, **kwargs):
+        # stock action
+        with transaction.atomic():
+            self.model(**kwargs).save()
+            # cash action
+            kwargs.pop("type")
+            value = kwargs.pop("price") * kwargs.pop("quantity")
+            # subtract money if buying and add money if selling
+            quantity = -1 if value > 0 else 1
+            value = abs(value)
+            self.model(
+                price=value,
+                quantity=quantity,
+                type=FinancialActionType.INTERNAL_CASH,
+                **kwargs,
+            ).save()
+
+    def _create_cash_transaction(self, **kwargs):
+        self.model(**kwargs).save()
+
+    def create_equity_transaction(self, **kwargs):
+        self._create_equity_transaction(**kwargs)
+        self._reset_portfolio_cache(profile=kwargs.get("profile"))
+
+    def create_cash_transaction(self, **kwargs):
+        self._create_cash_transaction(**kwargs)
+        self._reset_portfolio_cache(profile=kwargs.get("profile"))
+
+    def bulk_create(self, objs, batch_size=None, ignore_conflicts=False, profile=None):
+        objs: List[Transaction] = super().bulk_create(
+            objs, batch_size=batch_size, ignore_conflicts=ignore_conflicts
+        )
+        if profile is None:
+            pks = {}
+            profiles = []
+            for obj in objs:
+                if obj.profile.pk not in pks:
+                    profiles.append(obj.profile)
+            for profile in profiles:
+                self._reset_portfolio_cache(profile=profile)
+        else:
+            self._reset_portfolio_cache(profile=profile)
+
+
+class Transaction(FinancialItem):
+    """An individual transaction.
+
+    You must use `Transaction.objects.create_equity_transaction` or `Transaction.objects.create_cash_transaction`
+    so that the related `PortfolioItem` will be updated. Use bulk create along with the helper method
+    `Transaction.objects._create_equity_transaction` to skip `PortfolioItem` after each `Transaction`
+    creation.
+
+    """
+
+    objects = TransactionManager()
     profile = models.ForeignKey(
         "portfoliohut.Profile", blank=False, on_delete=models.PROTECT
     )
@@ -51,17 +161,18 @@ class Transaction(FinancialItem):
         max_digits=100,
         decimal_places=2,
         blank=False,
+        validators=[MinValueValidator(Decimal("0.01"))],
     )  # always greater than zero
 
     def display_items(self):
         items = super().display_items()
         items.append(f"profile={self.profile.user.get_full_name()}")
-        if self.type == FinancialItem.FinancialActionType.EQUITY:
+        if self.type == FinancialActionType.EQUITY:
             items.append(f"ticker={self.ticker}")
-        elif self.type == FinancialItem.FinancialActionType.EXTERNAL_CASH:
+        elif self.type == FinancialActionType.EXTERNAL_CASH:
             action = "cash_deposit" if self.quantity > 0 else "cash_withdrawal"
             items.append(f"{action}={self.price}")
-        elif self.type == FinancialItem.FinancialActionType.INTERNAL_CASH:
+        elif self.type == FinancialActionType.INTERNAL_CASH:
             action = "cash_sale" if self.quantity > 0 else "cash_purchase"
             items.append(f"{action}={self.price}")
             items.append(f"quantity={abs(self.quantity)}")
@@ -69,12 +180,21 @@ class Transaction(FinancialItem):
         return items
 
 
-class PortfolioItem(FinancialItem):
+# Note: It made more sense for this to be its own class rather than for it to inherit from the base
+#       class. This is because we want to auto add the date.
+class PortfolioItem(models.Model):
     """An item in a portfolio."""
 
     profile = models.ForeignKey(
         "portfoliohut.Profile", blank=False, on_delete=models.PROTECT
     )
+    # The type here can really only EQUITY or EXTERNAL_CASH
+    type = models.CharField(
+        max_length=4, blank=False, choices=FinancialActionType.choices
+    )
+    ticker = models.CharField(max_length=20, blank=False)  # For cash actions use "-"
+    created = models.DateTimeField(auto_now_add=True)  # created datetime
+    # For cash items
     quantity = models.IntegerField(
         blank=False
     )  # positive for buy/deposit negative for sell/withdraw
@@ -84,16 +204,20 @@ class PortfolioItem(FinancialItem):
         blank=False,
     )  # always greater than zero
 
+    def total_value(self):
+        return self.quantity * self.price
+
     def display_items(self):
-        items = super().display_items()
-        items.append(f"profile={self.profile.user.get_full_name()}")
-        if self.type == FinancialItem.FinancialActionType.EQUITY:
-            items.extend([f"ticker={self.ticker}"])
-        elif self.type in CASH:
-            action = "deposit" if self.quantity > 0 else "withdrawal"
-            items.append(f"{action}={self.price}")
+        items = [f"profile={self.profile.user.get_full_name()}"]
+        if self.type == FinancialActionType.EQUITY:
+            items.extend([f"ticker={self.ticker}", f"average_price={self.price}"])
+        elif self.type in CASH:  # there is no
+            items.append(f"balance={self.price*self.quantity}")
 
         return items
+
+    def __str__(self):
+        return ", ".join(self.display_items())
 
 
 class HistoricalEquityManager(models.Manager):
@@ -105,7 +229,7 @@ class HistoricalEquityManager(models.Manager):
             self.bulk_create(
                 [
                     self.model(
-                        type=FinancialItem.FinancialActionType.EQUITY,
+                        type=FinancialActionType.EQUITY,
                         ticker=ticker,
                         date=record["Date"],
                         open=record["Open"],
@@ -177,7 +301,7 @@ class HistoricalEquity(FinancialItem):
 
     def display_items(self):
         items = super().display_items()
-        if self.type == FinancialItem.FinancialActionType.EQUITY:
+        if self.type == FinancialActionType.EQUITY:
             items.extend([f"ticker={self.ticker}"])
 
         return items
@@ -186,6 +310,7 @@ class HistoricalEquity(FinancialItem):
 class EquityInfo(models.Model):
     ticker = models.CharField(max_length=20, blank=False)
     logo_url = models.URLField(blank=False)
+
     # Add other attributes from yf.Ticker().info as needed
 
     def __str__(self):

@@ -8,10 +8,12 @@ import yfinance as yf
 from django.contrib.auth.hashers import make_password
 from django.contrib.auth.models import User
 from django.core.management import BaseCommand
-from django.db import transaction
+from django.db import models, transaction
+from django.db.models import F, Sum
 from tqdm import tqdm
 
-from portfoliohut.models import FinancialItem, Profile, Transaction
+from portfoliohut.models import FinancialActionType, Profile, Transaction
+from portfoliohut.models.transactions import CASH
 
 TZ = pytz.timezone("UTC")
 tech_stock_list = [
@@ -63,14 +65,16 @@ def create_random_user(seed: int):
         profile.save()
 
     # Add Deposit
-    initial_balance = 100_000.00
+    initial_balance = 1_000_000.00
     with transaction.atomic():
         transaction_date = datetime(
             year=2020, month=1, day=1, hour=16, minute=0, tzinfo=TZ
         )
+        # Don't really want to update the portfolioitem_set here yet, so we don't use the manager
+        # methods
         Transaction(
             profile=profile,
-            type=FinancialItem.FinancialActionType.EXTERNAL_CASH,
+            type=FinancialActionType.EXTERNAL_CASH,
             date=transaction_date.date(),
             time=transaction_date.time(),
             price=initial_balance,
@@ -85,6 +89,7 @@ def create_random_user(seed: int):
         random.seed(seed)
         unique_ticker_count = 6
         sell_buy_count = 2
+        total_stocks = unique_ticker_count + 2 * sell_buy_count
         # Randomly pick stock tickers and repeat some of them for more buying and selling
         stock_tickers = random.choices(tech_stock_list, k=unique_ticker_count)
         stock_tickers += stock_tickers[: 2 * sell_buy_count]
@@ -109,36 +114,57 @@ def create_random_user(seed: int):
             )
         ]
         stock_quantities = [
-            max(round((initial_balance / 2) / price), 1)
+            max(
+                round(initial_balance * (1 / (total_stocks + sell_buy_count)) / price),
+                1,
+            )
             for price in stock_prices[:unique_ticker_count]
         ]
         # buy or sell half of current holdings
         stock_quantities += list(
-            map(lambda x: x / 2, stock_quantities[: sell_buy_count * 2])
+            map(lambda x: int(x / 2), stock_quantities[: sell_buy_count * 2])
         )
+        transaction_list = []
         for st, sd, sa, sq, sp in zip(
             stock_tickers, stock_dates, stock_actions, stock_quantities, stock_prices
         ):
+            # TODO: This might still be broken. It makes sense to use the validation code to add the
+            #       data into the DB once that is merged in.
             # stock action
-            Transaction(
-                profile=profile,
-                ticker=st,
-                type=FinancialItem.FinancialActionType.EQUITY,
-                date=sd.date(),
-                time=sd.time(),
-                price=sp,
-                quantity=sq * sa,
-            ).save()
+            transaction_list.append(
+                Transaction(
+                    profile=profile,
+                    ticker=st,
+                    type=FinancialActionType.EQUITY,
+                    date=sd.date(),
+                    time=sd.time(),
+                    price=sp,
+                    quantity=sq * sa,
+                )
+            )
             # cash action
-            Transaction(
-                profile=profile,
-                ticker="-",
-                type=FinancialItem.FinancialActionType.INTERNAL_CASH,
-                date=sd.date(),
-                time=sd.time(),
-                price=abs(sp * sq),
-                quantity=-sa,  # if sale balance goes up, for purchase balance goes down
-            ).save()
+            transaction_list.append(
+                Transaction(
+                    profile=profile,
+                    ticker="-",
+                    type=FinancialActionType.INTERNAL_CASH,
+                    date=sd.date(),
+                    time=sd.time(),
+                    price=abs(sp * sq),
+                    quantity=-sa,  # if sale balance goes up, for purchase balance goes down
+                )
+            )
+        Transaction.objects.bulk_create(transaction_list, profile=profile)
+
+        # Check to make sure that profile balance is greater than 0 (otherwise you overspent)
+        assert (
+            Transaction.objects.filter(profile=profile, type__in=CASH).aggregate(
+                total=Sum(
+                    F("price") * F("quantity"), output_field=models.DecimalField()
+                )
+            )["total"]
+            > 0
+        )
 
 
 def load_demo_users():

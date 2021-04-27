@@ -3,7 +3,8 @@ import plotly.express as px
 from django.contrib.auth.decorators import login_required
 from django.shortcuts import get_object_or_404, render
 
-from portfoliohut.models import Profile, TransactionTable
+from portfoliohut.models import Profile
+from portfoliohut.tables import PortfolioItemTable
 
 
 @login_required
@@ -15,22 +16,11 @@ def portfolio(request):
     if request.method == "GET":
         profile = get_object_or_404(Profile, user=request.user)
 
-        # Get current stock holdings
-        # stocks, total, cash_balance = profile.get_portfolio_details()
-        #
-        # # Get all transactions
-        # stock_transactions = Stock.objects.filter(profile=request.user.profile)
-        # cash_transactions = CashBalance.objects.filter(profile=request.user.profile)
-        # transactions = sorted(
-        #     chain(stock_transactions, cash_transactions),
-        #     key=lambda item: item.date_time,
-        #     reverse=True,
-        # )
-        #
-        # stock_transactions_table, cash_transactions_table = profile.table_query_sets()
-        # records = chain(stock_transactions_table, cash_transactions_table)
-        table = TransactionTable(profile.transactions)
-        table.paginate(page=request.GET.get("page", 1), per_page=25)
+        # Get current portfolio
+        current_portfolio_table = PortfolioItemTable(profile.portfolioitem_set.all())
+
+        # table = TransactionTable(profile.transactions)
+        # table.paginate(page=request.GET.get("page", 1), per_page=25)
 
         # Build graph
         graph_data = profile.get_cumulative_returns()
@@ -65,19 +55,18 @@ def portfolio(request):
             ),
         )
 
-        graph = fig.to_html(full_html=False, default_width="90%", default_height="30%")
+        graph = fig.to_html(full_html=False)
 
         return render(
             request,
             "portfoliohut/portfolio.html",
             {
+                "current_portfolio_table": current_portfolio_table,
                 # "profile_table": stocks,
                 "total": "${:,.2f}".format(100_000),  # TODO: FIXME
-                "table": table,
+                # "table": table,
                 # "transactions": transactions,
                 "cash": "${:,.2f}".format(100_000),  # TODO: FIXME
-                "graph_dates": dates,
-                "graph_returns": returns,
                 "graph": graph,
             },
         )

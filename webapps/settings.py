@@ -123,3 +123,6 @@ USE_TZ = True
 # https://docs.djangoproject.com/en/3.1/howto/static-files/
 
 STATIC_URL = "/static/"
+
+# Setup Django tables 2
+DJANGO_TABLES2_TEMPLATE = "django_tables2/bootstrap4.html"
