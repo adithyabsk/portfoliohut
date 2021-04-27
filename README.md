@@ -22,10 +22,10 @@ $ source ./venv/bin/activate
 (venv) $ pre-commit install # runs before each commit you make
 ```
 
-Add sample data
+Provision database
 
 ```shell
-(venv) $ python manage.py make_sample_data
+(venv) $ ./reset_db.sh
 ```
 
 Running the server
