@@ -6,6 +6,7 @@ import django_tables2 as tables
 import pandas as pd
 import pandas_market_calendars as mcal
 import yfinance as yf
+from django.core.exceptions import ObjectDoesNotExist
 from django.core.validators import MinValueValidator
 from django.db import models, transaction
 from django.db.models import F, Sum
@@ -307,11 +308,46 @@ class HistoricalEquity(FinancialItem):
         return items
 
 
+class EquityInfoManager(models.Manager):
+    def get_ticker(self, ticker):
+        try:
+            return self.get(ticker=ticker)
+        except ObjectDoesNotExist:
+            ticker_info = yf.Ticker(ticker).info
+            if "symbol" not in ticker_info:
+                raise ObjectDoesNotExist(
+                    f"could not find ticker '{ticker}' on yfinance"
+                )
+            ei = EquityInfo(
+                ticker=ticker,
+                logo_url=ticker_info.get("logo_url"),
+                address1=ticker_info.get("address1"),
+                city=ticker_info.get("city"),
+                country=ticker_info.get("country"),
+                zipcode=ticker_info.get("zip"),
+                industry=ticker_info.get("industry"),
+                sector=ticker_info.get("sector"),
+                summary=ticker_info.get("longBusinessSummary"),
+                name=ticker_info.get("longName"),
+            )
+            ei.save()
+
+            return ei
+
+
 class EquityInfo(models.Model):
+    objects = EquityInfoManager()
     ticker = models.CharField(max_length=20, blank=False)
     logo_url = models.URLField(blank=False)
 
-    # Add other attributes from yf.Ticker().info as needed
+    address1 = models.CharField(max_length=255)
+    city = models.CharField(max_length=255)
+    country = models.CharField(max_length=255)
+    zipcode = models.CharField(max_length=255)
+    industry = models.CharField(max_length=255)
+    sector = models.CharField(max_length=255)
+    summary = models.TextField()
+    name = models.CharField(max_length=255)
 
     def __str__(self):
         return f"ticker={self.ticker}"
