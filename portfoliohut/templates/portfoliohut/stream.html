@@ -23,44 +23,44 @@
 
         <!-- Heading -->
         <thead>
-          <tr>
-            <th>Rank</th>
-            <th>Username</th>
-            <th>Percent Returns</th>
-          </tr>
+        <tr>
+          <th>Rank</th>
+          <th>Username</th>
+          <th>Percent Returns</th>
+        </tr>
         </thead>
 
 
         <tbody>
-          <!-- Ranking Users -->
-          {% for profile in profiles %}
+        <!-- Ranking Users -->
+        {% for profile in profiles %}
+          <tr>
+            <th scope="row">{{ forloop.counter }}</th>
+            <td>
+              <a href="{% url 'profile' profile.user.username %}">
+                {{ profile.user.username }}
+              </a>
+            </td>
+            <td>{% firstof profile.returns|floatformat:-2 "No Return " %}%</td>
+          </tr>
+        {% endfor %}
+
+        <!-- Show returns for logged in user if user is PUBLIC and NOT on a RANKING user -->
+        {% if request.user.profile.profile_type == 'public' %}
+          {% if not request.user.profile in profiles %}
             <tr>
-              <th scope="row">{{ forloop.counter }}</th>
+              <th scope="row">{{ logged_in_user_rank }}</th>
               <td>
-                <a href="{% url 'profile' profile.user.username %}">
-                  {{ profile.user.username }}
+                <a href="{% url 'profile' request.user.username %}">
+                  {{ request.user.username }}
                 </a>
               </td>
-              <td>{% firstof profile.returns|floatformat:-2 "No Return " %}%</td>
+              <td>{% firstof logged_in_user_returns|floatformat:-2 "No Return " %}%</td>
             </tr>
-          {% endfor %}
-
-          <!-- Show returns for logged in user if user is PUBLIC and NOT on a RANKING user -->
-          {% if request.user.profile.profile_type == 'public' %}
-            {% if not request.user.profile in profiles %}
-              <tr>
-                <th scope="row">{{ logged_in_user_rank }}</th>
-                <td>
-                  <a href="{% url 'profile' request.user.username %}">
-                    {{ request.user.username }}
-                  </a>
-                </td>
-                <td>{% firstof logged_in_user_returns|floatformat:-2 "No Return " %}%</td>
-              </tr>
-            {% endif %}
           {% endif %}
+        {% endif %}
         </tbody>
       </table>
     </div>
-</div>
+  </div>
 {% endblock content %}

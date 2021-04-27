@@ -1,6 +1,6 @@
 {% extends 'portfoliohut/base.html' %}
 {% block head %}
-    <title>Profile</title>
+  <title>Profile</title>
 {% endblock head %}
 
 {% block content %}
@@ -44,38 +44,40 @@
         <h3>Bio</h3>
         {% if profile.id == request.user.id %}
           <form enctype="multipart/form-data" action="{% url 'profile' request.user.username %}" method="post">
-              <div class="row">{{ profile_form }}</div>
-            <br/><button type="submit" class="btn btn-primary">Submit</button>
+            <div class="row">{{ profile_form }}</div>
+            <br/>
+            <button type="submit" class="btn btn-primary">Submit</button>
             {% csrf_token %}
           </form><br/>
         {% else %}
 
-        <div class="row m-3">
-          <textarea readonly>{{ profile.bio }}</textarea>
-        </div>
+          <div class="row m-3">
+            <textarea readonly>{{ profile.bio }}</textarea>
+          </div>
         {% endif %}
 
         <!-- Display % Returns (if Public) -->
         {% if profile.profile_type == 'public' or profile.user == request.user or profile in request.user.friends.all %}
           <br/><h3>Returns</h3>
-            <div class="row m-3" align="center">
-              <textarea readonly>{% firstof profile.get_most_recent_return|floatformat:-2 "No Return " %}%</textarea>
-            </div><br/>
+          <div class="row m-3" align="center">
+            <textarea readonly>{% firstof profile.get_most_recent_return|floatformat:-2 "No Return " %}%</textarea>
+          </div><br/>
         {% endif %}
 
         <!-- Top 5 Stocks -->
-        <br/><h3>Top Investments</h3>
+        <br/>
+        <h3>Top Investments</h3>
 
-          <table class="row m-3">
-            <tr>
-              {% for stock in  top_stocks %}
+        <table class="row m-3">
+          <tr>
+            {% for stock in  top_stocks %}
               <td>
-              <img src = "{{stock}}">
+                <img src="{{ stock }}">
               </td>
-              {% endfor %}
+            {% endfor %}
 
-            </tr>
-          </table>
+          </tr>
+        </table>
 
         <!-- Display Friend Features -->
         {% if profile.id == request.user.id %}
@@ -86,13 +88,13 @@
             <div class="row m-3">
               <ul>
                 <span>Pending Friend Requests</span>
-                  <ul>
-                    {% for friend_request in profile.friend_requests.all %}
-                      <li><a href="{% url 'profile' friend_request.user.username %}" class="friend">
-                        {{ friend_request.user.username }}
-                      </a></li>
-                    {% endfor %}
-                  </ul>
+                <ul>
+                  {% for friend_request in profile.friend_requests.all %}
+                    <li><a href="{% url 'profile' friend_request.user.username %}" class="friend">
+                      {{ friend_request.user.username }}
+                    </a></li>
+                  {% endfor %}
+                </ul>
               </ul>
             </div>
           {% endif %}
@@ -115,8 +117,8 @@
 
         {% endif %}
 
-  <!-- Container -->
-  </div>
-</div>
+        <!-- Container -->
+      </div>
+    </div>
   </div>
 {% endblock content %}

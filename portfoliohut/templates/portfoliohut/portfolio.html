@@ -14,72 +14,72 @@
 
     <!-- Graph -->
     <div class="row justify-content-center mt-2">
-        {% if graph %}
-          {{ graph|safe }}
-        {% endif %}
+      {% if graph %}
+        {{ graph|safe }}
+      {% endif %}
     </div>
 
     <h4 class="text-center mt-2 mb-2">Current Portfolio Summary</h4>
     {% render_table current_portfolio_table %}
 
-{#    <!-- Summary Statistics -->#}
-{#    <h5>Portfolio Value: {{ total }}</h5>#}
-{#    <h5>Current Cash Balance: {{ cash }}</h5>#}
-{#    <br>#}
-{#    <br>#}
+    {#    <!-- Summary Statistics -->#}
+    {#    <h5>Portfolio Value: {{ total }}</h5>#}
+    {#    <h5>Current Cash Balance: {{ cash }}</h5>#}
+    {#    <br>#}
+    {#    <br>#}
 
-{#    <!-- Transaction History -->#}
-{#    <h4 style="text-align:center">Transaction History</h4>#}
-{#    <div name="transactions table" style="margin-top:.75em"></div>#}
-{#    <table class="table table-hover">#}
-{#      <thead>#}
-{#      <tr>#}
-{#        <th scope="col">Action</th>#}
-{#        <th scope="col">Ticker</th>#}
-{#        <th scope="col">Quantity</th>#}
-{#        <th scope="col">Price</th>#}
-{#        <th scope="col">Date/Time</th>#}
-{#        <th scope="col">Edit</th>#}
-{#      </tr>#}
-{#      </thead>#}
-{##}
-{#      <tbody>#}
-{#        {% for transaction in transactions %}#}
-{#          <tr>#}
-{#            <td>{{ transaction.action|upper }}</td>#}
-{##}
-{#            {% if transaction.ticker %}#}
-{#              <td>{{ transaction.ticker }}</td>#}
-{#            {% else %}#}
-{#              <td>--CASH--</td>#}
-{#            {% endif %}#}
-{##}
-{#            {% if transaction.quantity %}#}
-{#              <td>{{ transaction.quantity }}</td>#}
-{#            {% else %}#}
-{#              <td>--</td>#}
-{#            {% endif %}#}
-{##}
-{#            {% if transaction.price %}#}
-{#              <td>{{ transaction.price }}</td>#}
-{#            {% else %}#}
-{#              <td>{{ transaction.value }}</td>#}
-{#            {% endif %}#}
-{##}
-{#            <td>{{ transaction.date_time }}</td>#}
-{##}
-{#            <td><button class="btn btn-primary">Delete</button></td>#}
-{#          </tr>#}
-{#        {% endfor %}#}
-{#      </tbody>#}
-{#    </table>#}
-{#    </div>#}
+    {#    <!-- Transaction History -->#}
+    {#    <h4 style="text-align:center">Transaction History</h4>#}
+    {#    <div name="transactions table" style="margin-top:.75em"></div>#}
+    {#    <table class="table table-hover">#}
+    {#      <thead>#}
+    {#      <tr>#}
+    {#        <th scope="col">Action</th>#}
+    {#        <th scope="col">Ticker</th>#}
+    {#        <th scope="col">Quantity</th>#}
+    {#        <th scope="col">Price</th>#}
+    {#        <th scope="col">Date/Time</th>#}
+    {#        <th scope="col">Edit</th>#}
+    {#      </tr>#}
+    {#      </thead>#}
+    {##}
+    {#      <tbody>#}
+    {#        {% for transaction in transactions %}#}
+    {#          <tr>#}
+    {#            <td>{{ transaction.action|upper }}</td>#}
+    {##}
+    {#            {% if transaction.ticker %}#}
+    {#              <td>{{ transaction.ticker }}</td>#}
+    {#            {% else %}#}
+    {#              <td>--CASH--</td>#}
+    {#            {% endif %}#}
+    {##}
+    {#            {% if transaction.quantity %}#}
+    {#              <td>{{ transaction.quantity }}</td>#}
+    {#            {% else %}#}
+    {#              <td>--</td>#}
+    {#            {% endif %}#}
+    {##}
+    {#            {% if transaction.price %}#}
+    {#              <td>{{ transaction.price }}</td>#}
+    {#            {% else %}#}
+    {#              <td>{{ transaction.value }}</td>#}
+    {#            {% endif %}#}
+    {##}
+    {#            <td>{{ transaction.date_time }}</td>#}
+    {##}
+    {#            <td><button class="btn btn-primary">Delete</button></td>#}
+    {#          </tr>#}
+    {#        {% endfor %}#}
+    {#      </tbody>#}
+    {#    </table>#}
+    {#    </div>#}
 
-{#    <!-- Add Transaction -->#}
-{#    <a href="{% url 'add-transaction'%}" class="m-2 d-flex justify-content-center">#}
-{#      <button type="submit" class="btn btn-primary">Add Transaction</button>#}
-{#    </a>#}
-{#    <br>#}
+    {#    <!-- Add Transaction -->#}
+    {#    <a href="{% url 'add-transaction'%}" class="m-2 d-flex justify-content-center">#}
+    {#      <button type="submit" class="btn btn-primary">Add Transaction</button>#}
+    {#    </a>#}
+    {#    <br>#}
 
   </div>
 
