@@ -23,9 +23,9 @@ class ProfileForm(forms.ModelForm):
 
     def clean_profile_type(self):
         profile_type = self.cleaned_data.get("profile_type")
-        if (not profile_type == "public") and (not profile_type == "private"):
+        if profile_type not in ["public", "private"]:
             raise forms.ValidationError(
-                "Invalid profile type: must be 'PUBLIC' or 'PRIVATE'"
+                "Invalid profile type: Profile must be PUBLIC or PRIVATE"
             )
 
         return profile_type

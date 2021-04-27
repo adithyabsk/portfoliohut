@@ -20,7 +20,6 @@
 
         <!-- Stock Transaction -->
         <h4>Stock Transaction</h4>
-        {% if stock_error_msg %} {{ stock_error_msg }} {% endif %}
         <form method = "POST"  enctype="multipart/form-data">
           {% csrf_token %}
           <div class="row">
@@ -31,7 +30,6 @@
 
         <!-- Cash Transaction -->
         <h4>Cash Transaction</h4>
-        {% if cash_error_msg %} {{ cash_error_msg }} {% endif %}
         <form method = "POST">
           {% csrf_token %}
           <div class="row">
@@ -41,19 +39,14 @@
         </form><br/><br/>
 
         <!-- CSV Upload -->
-        <h2 class="col-md-6">CSV Upload</h2>
+        <!-- <h2 class="col-md-6">CSV Upload</h2>
         <form method = "POST" enctype="multipart/form-data">
             {% csrf_token %}
             <div class="row">
               {{csv_form}}
             </div>
             <br/><button type="submit" class="btn btn-primary" id="id_stock_button" name="submit_csv">Submit</button>
-        </form>
-
-    <!-- Go to Portfolio -->
-    <br/><a href="{% url 'portfolio'%}" class="m-2 d-flex justify-content-center">
-      <button type="submit" class="btn btn-primary">View My Portfolio</button>
-    </a>
+        </form> -->
 
     <!-- Alignment -->
     </div></div>

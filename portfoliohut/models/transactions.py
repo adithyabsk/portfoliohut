@@ -44,7 +44,9 @@ class Transaction(FinancialItem):
         "portfoliohut.Profile", blank=False, on_delete=models.PROTECT
     )
     time = models.TimeField(blank=False)
-    quantity = models.IntegerField(blank=False)  # positive for buy negative for sell
+    quantity = models.IntegerField(
+        blank=False
+    )  # positive for buy/deposit negative for sell/withdraw
     price = models.DecimalField(
         max_digits=100,
         decimal_places=2,
@@ -62,6 +64,7 @@ class Transaction(FinancialItem):
         elif self.type == FinancialItem.FinancialActionType.INTERNAL_CASH:
             action = "cash_sale" if self.quantity > 0 else "cash_purchase"
             items.append(f"{action}={self.price}")
+            items.append(f"quantity={abs(self.quantity)}")
 
         return items
 
@@ -72,7 +75,9 @@ class PortfolioItem(FinancialItem):
     profile = models.ForeignKey(
         "portfoliohut.Profile", blank=False, on_delete=models.PROTECT
     )
-    quantity = models.IntegerField(blank=False)  # positive for buy negative for sell
+    quantity = models.IntegerField(
+        blank=False
+    )  # positive for buy/deposit negative for sell/withdraw
     price = models.DecimalField(
         max_digits=100,
         decimal_places=2,
@@ -144,9 +149,11 @@ class HistoricalEquityManager(models.Manager):
             return ticker_qset
         else:
             df = yf.Ticker(ticker).history(period="max")
-            self._add_historical_ticker_data(ticker, df)
-
-            return self.filter(ticker=ticker)
+            if not df.empty:
+                self._add_historical_ticker_data(ticker, df)
+                return self.filter(ticker=ticker)
+            else:
+                return HistoricalEquity.objects.none()
 
 
 class HistoricalEquity(FinancialItem):
