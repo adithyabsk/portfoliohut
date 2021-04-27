@@ -13,6 +13,17 @@
       <h1 class="text-center" id="id_page_name">{{ page_name }}</h1>
     </div>
 
+    {%if profiles is None and page_name == "Friends Competition" %}
+    <div class="row mt-5">
+
+    <h3 class="text-center" >Make some friends! You can find some amazing traders
+    <a href="{% url 'global-competition'%}">here</a>.
+    </h3>
+  </div>
+
+  {% endif %}
+
+
     {% if graph %}
       {{ graph|safe }}
     {% endif %}
@@ -22,6 +33,7 @@
       <table class="table table-hover">
 
         <!-- Heading -->
+        {% if not profiles is None or profile_page == "Friends Competition" %}
         <thead>
         <tr>
           <th>Rank</th>
@@ -61,6 +73,8 @@
         {% endif %}
         </tbody>
       </table>
+      {% endif %}
+
     </div>
   </div>
 {% endblock content %}

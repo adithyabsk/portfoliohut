@@ -4,6 +4,8 @@
 import pandas as pd
 import plotly.graph_objects as go
 
+from portfoliohut.models import HistoricalEquity
+
 
 def combine_data(list_series, friends_list, user_returns, index_returns):
     """
@@ -75,3 +77,29 @@ def multi_plot(df, addAll=True):
     )
     graph = fig.to_html(full_html=False, default_width="90%", default_height="30%")
     return graph
+
+
+def combine_index_user(user_returns, index_returns):
+    user_returns = user_returns.rename("My Returns")
+    index_returns = index_returns.rename("S&P500")
+    merged_df = pd.concat([user_returns, index_returns], axis=1)
+    return merged_df.dropna()
+
+
+def _get_sp_index(start_date=None):
+    if start_date is not None:
+        dates, closes = zip(
+            *HistoricalEquity.objects.get_ticker("SPY")
+            .filter(date__gte=start_date)
+            .values_list("date", "close")
+        )
+
+    else:
+        dates, closes = zip(
+            *HistoricalEquity.objects.get_ticker("SPY").values_list("date", "close")
+        )
+
+    close_series = pd.Series(closes, index=dates).sort_index().astype(float)
+    running_returns = close_series.dropna().pct_change()
+    cumulative_series = (((1 + running_returns).cumprod()) - 1) * 100
+    return cumulative_series

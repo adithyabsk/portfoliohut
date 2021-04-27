@@ -3,7 +3,7 @@ import math
 from django.contrib.auth.decorators import login_required
 from django.shortcuts import render
 
-from portfoliohut.graph import combine_data, multi_plot
+from portfoliohut.graph import _get_sp_index, combine_data, multi_plot
 from portfoliohut.models import Profile
 
 NUM_LEADERS = 5
@@ -56,19 +56,25 @@ def global_competition(request):
 @login_required
 def friends_competition(request):
     context = {}
+    context["page_name"] = "Friends Competition"
 
     my_profile = Profile.objects.get(user=request.user)
     friends_profiles = Profile.objects.filter(friends__pk=request.user.profile.id)
     unsorted_friends_profiles = friends_profiles.all()
+
+    no_friends_flag = len(unsorted_friends_profiles) <= 0
+    if no_friends_flag:
+        return render(request, "portfoliohut/stream.html", context)
+
     annotated_profiles = []
     friends_series = []
     friends_names = []
-
     # Get friend's portfolio returns
     for profile in unsorted_friends_profiles:
         profile.returns = profile.get_most_recent_return()
         annotated_profiles.append(profile)
         friend_returns = profile.get_cumulative_returns()
+
         friends_series.append(friend_returns)
         friends_names.append(profile.user.first_name + " " + profile.user.last_name)
 
@@ -77,8 +83,7 @@ def friends_competition(request):
     annotated_profiles.append(my_profile)
 
     user_returns = my_profile.get_cumulative_returns()
-    # TODO : Change me  ###
-    index_returns = user_returns.multiply(10)
+    index_returns = _get_sp_index(user_returns.index[0])
     merged_df = combine_data(friends_series, friends_names, user_returns, index_returns)
     graph = multi_plot(merged_df)
     context["graph"] = graph
@@ -93,7 +98,6 @@ def friends_competition(request):
     )
     context["profiles"] = profiles
 
-    context["page_name"] = "Friends Competition"
     return render(request, "portfoliohut/stream.html", context)
 
 
