@@ -5,7 +5,7 @@ import pandas as pd
 import pandas_market_calendars as mcal
 from django import forms
 from django.core.validators import FileExtensionValidator
-from django.db import models
+from django.db import models, transaction
 from django.db.models import F, Sum
 from django.forms.widgets import DateInput, TimeInput
 from django.utils import timezone
@@ -89,6 +89,18 @@ def _is_shares_available(
     return num_shares >= quantity
 
 
+def _is_duplicate(
+    profile: Profile,
+    date: datetime.date,
+    time: datetime.time,
+    ticker: str,
+):
+    tqset = Transaction.objects.filter(
+        profile=profile, date=date, time=time, ticker=ticker
+    )
+    return tqset.exists()
+
+
 class BaseTransactionForm(forms.ModelForm):
     """Shared cleaning attributes between StockForm and CashForm."""
 
@@ -110,7 +122,7 @@ class BaseTransactionForm(forms.ModelForm):
     field_order = ["action", "date", "time"]
 
     def __init__(self, *args, **kwargs):
-        self.profile = kwargs.pop("profile")
+        self.profile = kwargs.pop("profile", None)
         super().__init__(*args, **kwargs)
         today = timezone.now().date()
         self.fields["date"].widget.attrs.update({"max": today})
@@ -233,6 +245,9 @@ class StockForm(BaseTransactionForm):
                     "given date/time to complete this transaction"
                 )
 
+        if _is_duplicate(self.profile, date, time, ticker):
+            raise forms.ValidationError("This transaction looks like a duplicate")
+
         # Set quantity based on buy/sell (negative quantity is sell in Transaction)
         multiplier = 1 if action == StockAction.BUY else -1
         cleaned_data["quantity"] *= multiplier
@@ -255,7 +270,7 @@ class StockForm(BaseTransactionForm):
             )
         return quantity
 
-    def save(self, *args):
+    def save(self, *, skip_portfolio_reset=False):
         Transaction.objects.create_equity_transaction(
             profile=self.profile, type=FinancialActionType.EQUITY, **self.cleaned_data
         )
@@ -292,16 +307,18 @@ class CashForm(BaseTransactionForm):
         price = cleaned_data.get("price")
         date = cleaned_data.get("date")
         time = cleaned_data.get("time")
-        if action == "withdraw":
-            valid_withdraw = _is_cash_available(self.profile, date, time, price, 1)
-            if not valid_withdraw:
+        if action == CashAction.WITHDRAW:
+            if not _is_cash_available(self.profile, date, time, price):
                 raise forms.ValidationError(
                     "Invalid WITHDRAW: There is not enough cash in your account on the given "
                     "date/time to complete this transaction"
                 )
 
+        if _is_duplicate(self.profile, date, time, "-"):
+            raise forms.ValidationError("This transaction looks like a duplicate")
+
         # Set quantity based on buy/sell (negative quantity is withdraw in Transaction)
-        cleaned_data["quantity"] = 1 if action == StockAction.BUY else -1
+        cleaned_data["quantity"] = 1 if action == CashAction.DEPOSIT else -1
 
         return cleaned_data
 
@@ -313,7 +330,7 @@ class CashForm(BaseTransactionForm):
             )
         return action
 
-    def save(self, *args):
+    def save(self, *, skip_portfolio_reset=False):
         Transaction.objects.create_cash_transaction(
             profile=self.profile,
             type=FinancialActionType.EXTERNAL_CASH,
@@ -326,10 +343,38 @@ class CSVForm(forms.Form):
         validators=[FileExtensionValidator(["csv"], "Only csv files are allowed")]
     )
 
-    def clean_csv_file(self):
-        csv_file = self.cleaned_data.get("csv_file")
+    def __init__(self, *args, **kwargs):
+        self.profile = kwargs.pop("profile", None)
+        super().__init__(*args, **kwargs)
+
+    def clean(self):
+        cleaned_data = super().clean()
 
         try:
-            self.csv_df = pd.read_csv(csv_file)
+            csv_df = pd.read_csv(cleaned_data.get("csv_file"))
         except (pd.errors.ParseError, ValueError):
-            raise forms.ValidationError("Could not read csv.")
+            raise forms.ValidationError("Could not read CSV.")
+
+        if csv_df.columns.tolist() != [
+            "action",
+            "date",
+            "time",
+            "price",
+            "ticker",
+            "quantity",
+        ]:
+            raise forms.ValidationError("Malformed CSV columns.")
+
+        with transaction.atomic():
+            for idx, row in csv_df.iterrows():
+                FormClass = StockForm if row["action"] in StockAction else CashForm
+                row_form = FormClass(row.to_dict(), profile=self.profile)
+                if not row_form.is_valid():
+                    for error_message in row_form.errors.values():
+                        self.add_error(None, error_message)
+
+                    raise forms.ValidationError(f"Error occurred on row {idx+1}")
+
+                row_form.save(skip_portfolio_reset=True)
+
+            Transaction.objects._reset_portfolio_cache(profile=self.profile)

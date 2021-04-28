@@ -115,13 +115,15 @@ class TransactionManager(models.Manager):
     def _create_cash_transaction(self, **kwargs):
         self.model(**kwargs).save()
 
-    def create_equity_transaction(self, **kwargs):
+    def create_equity_transaction(self, skip_portfolio_reset=False, **kwargs):
         self._create_equity_transaction(**kwargs)
-        self._reset_portfolio_cache(profile=kwargs.get("profile"))
+        if not skip_portfolio_reset:
+            self._reset_portfolio_cache(profile=kwargs.get("profile"))
 
-    def create_cash_transaction(self, **kwargs):
+    def create_cash_transaction(self, skip_portfolio_reset=False, **kwargs):
         self._create_cash_transaction(**kwargs)
-        self._reset_portfolio_cache(profile=kwargs.get("profile"))
+        if not skip_portfolio_reset:
+            self._reset_portfolio_cache(profile=kwargs.get("profile"))
 
     def bulk_create(self, objs, batch_size=None, ignore_conflicts=False, profile=None):
         objs: List[Transaction] = super().bulk_create(

@@ -18,7 +18,7 @@
 
       <!-- Stock Transaction -->
       <h4>Stock Transaction</h4>
-      <form method="POST" enctype="multipart/form-data">
+      <form method="POST">
         {% csrf_token %}
         <div class="row">
           {{ stock_form }}
@@ -42,13 +42,14 @@
 
       <!-- CSV Upload -->
       <h2>CSV Upload</h2>
+      Please use <a href="{% static 'portfoliohut/sample_upload.csv' %}" download>this csv format</a> to bulk upload transactions.
       <form method="POST" enctype="multipart/form-data">
         {% csrf_token %}
         <div class="row">
           {{ csv_form }}
         </div>
         <br/>
-        <button type="submit" class="btn btn-primary" id="id_stock_button" name="submit_csv">Submit</button>
+        <button type="submit" class="btn btn-primary" id="id_csv_button" name="submit_csv">Submit</button>
       </form>
 
     </div>
