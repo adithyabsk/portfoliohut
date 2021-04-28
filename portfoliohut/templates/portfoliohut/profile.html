@@ -4,121 +4,118 @@
 {% endblock head %}
 
 {% block content %}
-  <div class="container">
+  <!-- Page Title -->
+  <div class="row mb-2">
+    <h1 class="text-center">Profile</h1>
+    <h2 class="text-center">{{ profile.user.username }}</h2>
+  </div>
 
-    <!-- Page Title -->
-    <div class="row mt-4 mb-2">
-      <h1 class="text-center">Profile</h1>
-      <h2 class="text-center">{{ profile.user.username }}</h2>
-    </div>
+  <!-- Formatting -->
+  <div class="row m-3 d-flex justify-content-center">
+    <div class="col-md-6">
 
-    <!-- Formatting -->
-    <div class="row m-3 d-flex justify-content-center">
-      <div class="col-md-6">
-
-        <!-- Social Info -->
-        {% if profile.id != request.user.id %}
-          <div align="center">
-            {% if profile in request.user.profile.friend_requests.all %}
-              <a href="{% url 'respond-to-friend-request' profile.user.username 'accept' %}">
-                <button class="btn btn-primary">Accept</button>
-              </a>
-              <a href="{% url 'respond-to-friend-request' profile.user.username 'decline' %}">
-                <button class="btn btn-primary">Decline</button>
-              </a>
-            {% else %}
-              <a href="{% url 'friend' profile.user.username %}">
-                {% if request.user.profile in profile.friends.all %}
-                  <button type="submit" class="btn btn-primary">Unfriend</button>
-                {% elif request.user.profile in profile.friend_requests.all %}
-                  <button type="submit" class="btn btn-primary" disabled>Pending</button>
-                {% else %}
-                  <button type="submit" class="btn btn-primary">Friend</button>
-                {% endif %}
-              </a>
-            {% endif %}
-          </div><br/>
-        {% endif %}
-
-        <!-- Display Bio and % Returns Public/Private Selector -->
-        <h3>Bio</h3>
-        {% if profile.id == request.user.id %}
-          <form enctype="multipart/form-data" action="{% url 'profile' request.user.username %}" method="post">
-            <div class="row">{{ profile_form }}</div>
-            <br/>
-            <button type="submit" class="btn btn-primary">Submit</button>
-            {% csrf_token %}
-          </form><br/>
-        {% else %}
-
-          <div class="row m-3">
-            <textarea readonly>{{ profile.bio }}</textarea>
-          </div>
-        {% endif %}
-
-        <!-- Display % Returns (if Public) -->
-        {% if profile.profile_type == 'public' or profile.user == request.user or profile in request.user.friends.all %}
-          <br/><h3>Returns</h3>
-          <div class="row m-3" align="center">
-            <textarea readonly>{% firstof profile.get_most_recent_return|floatformat:-2 "No Return " %}%</textarea>
-          </div><br/>
-        {% endif %}
-
-        <!-- Top 5 Stocks -->
-        <br/>
-        <h3>Top Investments</h3>
-
-        <table class="row m-3">
-          <tr>
-            {% for stock in  top_stocks %}
-              <td>
-                <img src="{{ stock }}">
-              </td>
-            {% endfor %}
-
-          </tr>
-        </table>
-
-        <!-- Display Friend Features -->
-        {% if profile.id == request.user.id %}
-          <br/><h3>Friends</h3>
-
-          <!-- Pending Friend Requests -->
-          {% if profile.friend_requests.all %}
-            <div class="row m-3">
-              <ul>
-                <span>Pending Friend Requests</span>
-                <ul>
-                  {% for friend_request in profile.friend_requests.all %}
-                    <li><a href="{% url 'profile' friend_request.user.username %}" class="friend">
-                      {{ friend_request.user.username }}
-                    </a></li>
-                  {% endfor %}
-                </ul>
-              </ul>
-            </div>
+      <!-- Social Info -->
+      {% if profile.id != request.user.id %}
+        <div align="center">
+          {% if profile in request.user.profile.friend_requests.all %}
+            <a href="{% url 'respond-to-friend-request' profile.user.username 'accept' %}">
+              <button class="btn btn-primary">Accept</button>
+            </a>
+            <a href="{% url 'respond-to-friend-request' profile.user.username 'decline' %}">
+              <button class="btn btn-primary">Decline</button>
+            </a>
+          {% else %}
+            <a href="{% url 'friend' profile.user.username %}">
+              {% if request.user.profile in profile.friends.all %}
+                <button type="submit" class="btn btn-primary">Unfriend</button>
+              {% elif request.user.profile in profile.friend_requests.all %}
+                <button type="submit" class="btn btn-primary" disabled>Pending</button>
+              {% else %}
+                <button type="submit" class="btn btn-primary">Friend</button>
+              {% endif %}
+            </a>
           {% endif %}
+        </div><br/>
+      {% endif %}
 
-          <!-- Friends -->
+      <!-- Display Bio and % Returns Public/Private Selector -->
+      <h3>Bio</h3>
+      {% if profile.id == request.user.id %}
+        <form enctype="multipart/form-data" action="{% url 'profile' request.user.username %}" method="post">
+          <div class="row">{{ profile_form }}</div>
+          <br/>
+          <button type="submit" class="btn btn-primary">Submit</button>
+          {% csrf_token %}
+        </form><br/>
+      {% else %}
+
+        <div class="row m-3">
+          <textarea readonly>{{ profile.bio }}</textarea>
+        </div>
+      {% endif %}
+
+      <!-- Display % Returns (if Public) -->
+      {% if profile.profile_type == 'public' or profile.user == request.user or profile in request.user.friends.all %}
+        <br/><h3>Returns</h3>
+        <div class="row m-3" align="center">
+          <textarea readonly>{% firstof profile.get_most_recent_return|floatformat:-2 "No Return " %}%</textarea>
+        </div><br/>
+      {% endif %}
+
+      <!-- Top 5 Stocks -->
+      <br/>
+      <h3>Top Investments</h3>
+
+      <table class="row m-3">
+        <tr>
+          {% for stock in  top_stocks %}
+            <td>
+              <img src="{{ stock }}">
+            </td>
+          {% endfor %}
+
+        </tr>
+      </table>
+
+      <!-- Display Friend Features -->
+      {% if profile.id == request.user.id %}
+        <br/><h3>Friends</h3>
+
+        <!-- Pending Friend Requests -->
+        {% if profile.friend_requests.all %}
           <div class="row m-3">
             <ul>
-              <span>Friends</span>
+              <span>Pending Friend Requests</span>
               <ul>
-                {% for friend in profile.friends.all %}
-                  <li><a href="{% url 'profile' friend.user.username %}" class="friend">
-                    {{ friend.user.username }}
+                {% for friend_request in profile.friend_requests.all %}
+                  <li><a href="{% url 'profile' friend_request.user.username %}" class="friend">
+                    {{ friend_request.user.username }}
                   </a></li>
-                {% empty %}
-                  <li>No friends yet</li>
                 {% endfor %}
               </ul>
             </ul>
           </div>
-
         {% endif %}
 
-        <!-- Container -->
-      </div>
+        <!-- Friends -->
+        <div class="row m-3">
+          <ul>
+            <span>Friends</span>
+            <ul>
+              {% for friend in profile.friends.all %}
+                <li><a href="{% url 'profile' friend.user.username %}" class="friend">
+                  {{ friend.user.username }}
+                </a></li>
+              {% empty %}
+                <li>No friends yet</li>
+              {% endfor %}
+            </ul>
+          </ul>
+        </div>
+
+      {% endif %}
+
+      <!-- Container -->
     </div>
   </div>
 {% endblock content %}

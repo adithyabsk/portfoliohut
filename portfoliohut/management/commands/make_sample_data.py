@@ -1,3 +1,4 @@
+import io
 import random
 from datetime import datetime, timedelta
 
@@ -7,13 +8,13 @@ import pytz
 import yfinance as yf
 from django.contrib.auth.hashers import make_password
 from django.contrib.auth.models import User
+from django.core.files.uploadedfile import SimpleUploadedFile
 from django.core.management import BaseCommand
-from django.db import models, transaction
-from django.db.models import F, Sum
+from django.db import transaction
 from tqdm import tqdm
 
-from portfoliohut.models import FinancialActionType, Profile, Transaction
-from portfoliohut.models.transactions import CASH
+from portfoliohut.forms import CSVForm
+from portfoliohut.models import Profile
 
 TZ = pytz.timezone("UTC")
 tech_stock_list = [
@@ -64,29 +65,24 @@ def create_random_user(seed: int):
         profile = Profile(user=user)
         profile.save()
 
-    # Add Deposit
-    initial_balance = 1_000_000.00
-    with transaction.atomic():
-        transaction_date = datetime(
-            year=2020, month=1, day=1, hour=16, minute=0, tzinfo=TZ
-        )
-        # Don't really want to update the portfolioitem_set here yet, so we don't use the manager
-        # methods
-        Transaction(
-            profile=profile,
-            type=FinancialActionType.EXTERNAL_CASH,
-            date=transaction_date.date(),
-            time=transaction_date.time(),
-            price=initial_balance,
-            quantity=1,
-        ).save()
-
     # Add stocks actions
+    # this little algo buys the first N unique stocks and then the remaining M*2 stocks follow
+    # a buy, sell pattern. Here M*2 must be less than N. The M stocks are selected in order of
+    # appearance in the first N stocks.
     with transaction.atomic():
-        # this little algo buys the first N unique stocks and then the remaining M*2 stocks follow
-        # a buy, sell pattern. Here M*2 must be less than N. The M stocks are selected in order of
-        # appearance in the first N stocks.
-        random.seed(seed)
+        initial_balance = 500_000.00
+        column_names = ["action", "date", "time", "price", "ticker", "quantity"]
+        rows = [
+            [
+                "deposit",
+                datetime(year=2020, month=1, day=1).replace(tzinfo=TZ),
+                "9:30",
+                initial_balance,
+                None,
+                None,
+            ]
+        ]
+        random.seed(seed * 100)
         unique_ticker_count = 6
         sell_buy_count = 2
         total_stocks = unique_ticker_count + 2 * sell_buy_count
@@ -104,11 +100,16 @@ def create_random_user(seed: int):
             ).to_pydatetime()
         )
         stock_dates = [sd.replace(tzinfo=TZ) for sd in stock_dates]
-        stock_actions = [1] * unique_ticker_count + [-1, 1] * sell_buy_count
+        stock_times = ["16:00"] * total_stocks
+        stock_actions = ["buy"] * unique_ticker_count + ["sell", "buy"] * sell_buy_count
+        # TODO: update this list comprehension to use `HistoricalEquity` for a speed increase
         stock_prices = [
-            yf.Ticker(ticker)
-            .history(start=date, end=date + timedelta(1), interval="1d")["Close"]
-            .values[0]
+            round(
+                yf.Ticker(ticker)
+                .history(start=date, end=date + timedelta(1), interval="1d")["Close"]
+                .values[0],
+                2,
+            )
             for ticker, date in zip(
                 stock_tickers + stock_tickers[: sell_buy_count * 2], stock_dates
             )
@@ -124,47 +125,30 @@ def create_random_user(seed: int):
         stock_quantities += list(
             map(lambda x: int(x / 2), stock_quantities[: sell_buy_count * 2])
         )
-        transaction_list = []
-        for st, sd, sa, sq, sp in zip(
-            stock_tickers, stock_dates, stock_actions, stock_quantities, stock_prices
-        ):
-            # TODO: This might still be broken. It makes sense to use the validation code to add the
-            #       data into the DB once that is merged in.
-            # stock action
-            transaction_list.append(
-                Transaction(
-                    profile=profile,
-                    ticker=st,
-                    type=FinancialActionType.EQUITY,
-                    date=sd.date(),
-                    time=sd.time(),
-                    price=sp,
-                    quantity=sq * sa,
-                )
+        rows += list(
+            zip(
+                stock_actions,
+                stock_dates,
+                stock_times,
+                stock_prices,
+                stock_tickers,
+                stock_quantities,
             )
-            # cash action
-            transaction_list.append(
-                Transaction(
-                    profile=profile,
-                    ticker="-",
-                    type=FinancialActionType.INTERNAL_CASH,
-                    date=sd.date(),
-                    time=sd.time(),
-                    price=abs(sp * sq),
-                    quantity=-sa,  # if sale balance goes up, for purchase balance goes down
-                )
-            )
-        Transaction.objects.bulk_create(transaction_list, profile=profile)
-
-        # Check to make sure that profile balance is greater than 0 (otherwise you overspent)
-        assert (
-            Transaction.objects.filter(profile=profile, type__in=CASH).aggregate(
-                total=Sum(
-                    F("price") * F("quantity"), output_field=models.DecimalField()
-                )
-            )["total"]
-            > 0
         )
+        df = pd.DataFrame(rows, columns=column_names)
+        df["date"] = pd.to_datetime(df["date"])
+        output_stream = io.BytesIO()
+        df.to_csv(output_stream, index=False, date_format="%Y-%m-%d")
+        csv_file = SimpleUploadedFile.from_dict(
+            {
+                "filename": "temp.csv",
+                "content": output_stream.getvalue(),
+            }
+        )
+        csv_form = CSVForm(files={"csv_file": csv_file}, profile=profile)
+        # the is_valid function does the actual checking and saving
+        if not csv_form.is_valid():
+            raise ValueError("The transaction data is invalid")
 
 
 def load_demo_users():

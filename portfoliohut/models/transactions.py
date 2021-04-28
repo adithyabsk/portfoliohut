@@ -40,7 +40,7 @@ class FinancialItem(models.Model):
 
 
 FinancialActionType = FinancialItem.FinancialActionType
-CASH = (
+CashActions = (
     FinancialActionType.EXTERNAL_CASH,
     FinancialActionType.INTERNAL_CASH,
 )
@@ -80,7 +80,7 @@ class TransactionManager(models.Manager):
                 ]
             )
             total_price = (
-                profile.transaction_set.filter(type__in=CASH)
+                profile.transaction_set.filter(type__in=CashActions)
                 .values("quantity", "price")
                 .aggregate(
                     total_price=Sum(
@@ -103,11 +103,12 @@ class TransactionManager(models.Manager):
             # cash action
             kwargs.pop("type")
             value = kwargs.pop("price") * kwargs.pop("quantity")
+            kwargs.pop("ticker")
             # subtract money if buying and add money if selling
             quantity = -1 if value > 0 else 1
-            value = abs(value)
             self.model(
-                price=value,
+                ticker="-",
+                price=abs(value),
                 quantity=quantity,
                 type=FinancialActionType.INTERNAL_CASH,
                 **kwargs,
@@ -116,13 +117,15 @@ class TransactionManager(models.Manager):
     def _create_cash_transaction(self, **kwargs):
         self.model(**kwargs).save()
 
-    def create_equity_transaction(self, **kwargs):
+    def create_equity_transaction(self, skip_portfolio_reset=False, **kwargs):
         self._create_equity_transaction(**kwargs)
-        self._reset_portfolio_cache(profile=kwargs.get("profile"))
+        if not skip_portfolio_reset:
+            self._reset_portfolio_cache(profile=kwargs.get("profile"))
 
-    def create_cash_transaction(self, **kwargs):
+    def create_cash_transaction(self, skip_portfolio_reset=False, **kwargs):
         self._create_cash_transaction(**kwargs)
-        self._reset_portfolio_cache(profile=kwargs.get("profile"))
+        if not skip_portfolio_reset:
+            self._reset_portfolio_cache(profile=kwargs.get("profile"))
 
     def bulk_create(self, objs, batch_size=None, ignore_conflicts=False, profile=None):
         objs: List[Transaction] = super().bulk_create(
@@ -212,7 +215,7 @@ class PortfolioItem(models.Model):
         items = [f"profile={self.profile.user.get_full_name()}"]
         if self.type == FinancialActionType.EQUITY:
             items.extend([f"ticker={self.ticker}", f"average_price={self.price}"])
-        elif self.type in CASH:  # there is no
+        elif self.type in CashActions:  # there is no
             items.append(f"balance={self.price*self.quantity}")
 
         return items

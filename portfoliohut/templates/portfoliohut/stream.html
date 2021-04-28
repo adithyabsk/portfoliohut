@@ -6,34 +6,29 @@
 {% endblock head %}
 
 {% block content %}
-  <div class="container">
-
-    <!-- Page Title -->
-    <div class="row mt-5">
-      <h1 class="text-center" id="id_page_name">{{ page_name }}</h1>
-    </div>
-
-    {%if profiles is None and page_name == "Friends Competition" %}
-    <div class="row mt-5">
-
-    <h3 class="text-center" >Make some friends! You can find some amazing traders
-    <a href="{% url 'global-competition'%}">here</a>.
-    </h3>
+  <!-- Page Title -->
+  <div class="row">
+    <h1 class="text-center" id="id_page_name">{{ page_name }}</h1>
   </div>
+
+  {% if profiles is None and page_name == "Friends Competition" %}
+    <div class="row mt-5">
+      <h3 class="text-center">Make some friends! You can find some amazing traders
+        <a href="{% url 'global-competition' %}">here</a>.
+      </h3>
+    </div>
 
   {% endif %}
 
+  {% if graph %}
+    {{ graph|safe }}
+  {% endif %}
 
-    {% if graph %}
-      {{ graph|safe }}
-    {% endif %}
-
-    <!-- Leaderboard -->
-    <div class="row m-3 d-flex justify-content-center">
-      <table class="table table-hover">
-
-        <!-- Heading -->
-        {% if not profiles is None or profile_page == "Friends Competition" %}
+  <!-- Leaderboard -->
+  <div class="row m-3 d-flex justify-content-center">
+    <table class="table table-hover">
+      <!-- Heading -->
+      {% if not profiles is None or profile_page == "Friends Competition" %}
         <thead>
         <tr>
           <th>Rank</th>
@@ -41,7 +36,6 @@
           <th>Percent Returns</th>
         </tr>
         </thead>
-
 
         <tbody>
         <!-- Ranking Users -->
@@ -72,9 +66,7 @@
           {% endif %}
         {% endif %}
         </tbody>
-      </table>
+        </table>
       {% endif %}
-
-    </div>
   </div>
 {% endblock content %}

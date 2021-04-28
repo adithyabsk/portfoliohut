@@ -20,10 +20,12 @@ def portfolio(request):
 
         # Build graph
         graph_data = profile.get_cumulative_returns()
-        start_date = graph_data.index[0]
-        index_data = _get_sp_index(start_date)
-        merged_df = combine_index_user(graph_data, index_data)
-        graph = multi_plot(merged_df)
+        graph = None
+        if not graph_data.empty:
+            start_date = graph_data.index[0]
+            index_data = _get_sp_index(start_date)
+            merged_df = combine_index_user(graph_data, index_data)
+            graph = multi_plot(merged_df)
 
         return render(
             request,

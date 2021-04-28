@@ -16,7 +16,6 @@ Initial setup steps
 $ brew install pre-commit
 $ python -m venv venv
 $ source ./venv/bin/activate
-(venv) $ python manage.py migrate
 (venv) $ pip install -r requirements.txt
 (venv) $ pip install -r requirements-dev.txt
 (venv) $ pre-commit install # runs before each commit you make

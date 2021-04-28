@@ -37,6 +37,12 @@ def _calc_returns(transaction_qset: "QuerySet[Transaction]"):
             FinancialActionType.INTERNAL_CASH,
         ]
     ).exclude(type=FinancialActionType.INTERNAL_CASH, quantity__lt=0)
+
+    # Abort if there were no relevant transactions
+    empty_series = pd.Series([], name="Returns")
+    if not relevant_transaction_qset.exists():
+        return empty_series
+
     start_date = relevant_transaction_qset.first().date
     # Remove cash balance ticker
     distinct_tickers = set(
@@ -45,8 +51,9 @@ def _calc_returns(transaction_qset: "QuerySet[Transaction]"):
         )
     )
 
+    # Abort if there were not any stock transactions
     if not distinct_tickers:
-        return pd.Series([], name="Returns")
+        return empty_series
 
     # Build a list of stock prices across all relevant dates
     price_series_list = []
@@ -80,18 +87,22 @@ def _calc_returns(transaction_qset: "QuerySet[Transaction]"):
     )
 
     # Also build the cumulative sale cash balance at each date.
-    sale_dates, sale_prices = zip(
-        *relevant_transaction_qset.filter(
-            type=FinancialActionType.INTERNAL_CASH
-        ).values_list("date", "price")
-    )
-    sale_cash_series = (
-        pd.Series(sale_prices, index=sale_dates, name="Cash")
-        .cumsum()
-        .reindex(stocks_df.index, method="ffill")
-        .fillna(0)
-        .astype(float)
-    )
+    sale_cash_qset = relevant_transaction_qset.filter(
+        type=FinancialActionType.INTERNAL_CASH
+    ).values_list("date", "price")
+    if sale_cash_qset.exists():
+        sale_dates, sale_prices = zip(*sale_cash_qset)
+        sale_cash_series = (
+            pd.Series(sale_prices, index=sale_dates, name="Cash")
+            .cumsum()
+            .reindex(stocks_df.index, method="ffill")
+            .fillna(0)
+            .astype(float)
+        )
+    else:
+        sale_cash_series = pd.Series(
+            [0] * len(quantities_df), index=stocks_df.index, name="Cash"
+        )
 
     # Now, we simply multiply stocks_df by quantities_df and add sale_cash_df
     returns_series = stocks_df.multiply(quantities_df).sum(axis=1).add(sale_cash_series)
