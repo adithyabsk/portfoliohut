@@ -1,3 +1,4 @@
+from django.contrib import messages
 from django.contrib.auth.decorators import login_required
 from django.shortcuts import render
 
@@ -57,8 +58,9 @@ def transaction_input(request):
         if not stock_form.is_valid():
             return render(request, "portfoliohut/add_transaction.html", context)
 
-        context["message"] = "Stock transaction submitted"
         stock_form.save()
+        ticker = stock_form.cleaned_data.get("ticker")
+        messages.success(request, f"{ticker} transaction successfully saved")
 
     # Submitted CashForm with POST request
     elif "submit_cash" in request.POST:
@@ -68,8 +70,8 @@ def transaction_input(request):
         if not cash_form.is_valid():
             return render(request, "portfoliohut/add_transaction.html", context)
 
-        context["message"] = "Cash transaction submitted"
         cash_form.save()
+        messages.success(request, "Cash transaction successfully saved")
 
     # Submitted CSVForm with POST request
     # elif "submit_csv" in request.POST:
