@@ -1,10 +1,11 @@
 from django.contrib.auth.decorators import login_required
 from django.contrib.auth.models import User
+from django.db.models import DecimalField, ExpressionWrapper, F
 from django.shortcuts import redirect, render
 from django.urls import reverse
 
 from portfoliohut.forms import ProfileForm
-from portfoliohut.models import Profile
+from portfoliohut.models import EquityInfo, FinancialActionType, PortfolioItem, Profile
 
 
 @login_required
@@ -25,12 +26,21 @@ def profile(request, username):
     user_id = User.objects.get(username=username)
     profile = Profile.objects.get(user_id=user_id)
     context["profile"] = profile
+    get_all_stocks = (
+        PortfolioItem.objects.filter(profile=profile, type=FinancialActionType.EQUITY)
+        .values("ticker")
+        .annotate(
+            total_price=ExpressionWrapper(
+                F("quantity") * F("price"), output_field=DecimalField()
+            )
+        )
+        .order_by("-total_price")[:5]
+    )
 
-    # top_stocks = profile.top_stocks()
     stocks_urls = []
-    # base_url = "https://logo.clearbit.com/"
-    # for stock in top_stocks:
-    #     stocks_urls.append(base_url + stock.website + "?size = 100")
+    if get_all_stocks:
+        for i in get_all_stocks:
+            stocks_urls.append((EquityInfo.objects.get_ticker(i["ticker"])).logo_url)
 
     context["top_stocks"] = stocks_urls
     # Handle GET request
