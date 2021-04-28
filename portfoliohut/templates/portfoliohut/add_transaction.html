@@ -6,56 +6,51 @@
 {% endblock head %}
 
 {% block content %}
-  <div class="container">
+  <!-- Page Title -->
+  <div class="row mt-5">
+    <h1 class="text-center" id="id_page_name">Add Transactions</h1>
+  </div>
 
-    <!-- Page Title -->
-    <div class="row mt-5">
-      <h1 class="text-center" id="id_page_name">Add Transactions</h1>
-    </div>
+  <!-- Form Alignment -->
+  <div class="row m-3 d-flex justify-content-center">
+    <div class="col-md-6">
+      <h2>Manual Import</h2>
 
-    <!-- Form Alignment -->
-    <div class="row m-3 d-flex justify-content-center">
-      <div class="col-md-6">
-        <h2>Manual Import</h2>
-
-        <!-- Stock Transaction -->
-        <h4>Stock Transaction</h4>
-        <form method="POST" enctype="multipart/form-data">
-          {% csrf_token %}
-          <div class="row">
-            {{ stock_form }}
-          </div>
-          <br/>
-          <button type="submit" class="btn btn-primary" id="id_stock_button" name="submit_stock">Submit</button>
-        </form>
+      <!-- Stock Transaction -->
+      <h4>Stock Transaction</h4>
+      <form method="POST" enctype="multipart/form-data">
+        {% csrf_token %}
+        <div class="row">
+          {{ stock_form }}
+        </div>
         <br/>
+        <button type="submit" class="btn btn-primary" id="id_stock_button" name="submit_stock">Submit</button>
+      </form>
+      <br/>
 
-        <!-- Cash Transaction -->
-        <h4>Cash Transaction</h4>
-        <form method="POST">
-          {% csrf_token %}
-          <div class="row">
-            {{ cash_form }}
-          </div>
-          <br/>
-          <button type="submit" class="btn btn-primary" id="id_cash_button" name="submit_cash">Submit</button>
-        </form>
-        <br/><br/>
+      <!-- Cash Transaction -->
+      <h4>Cash Transaction</h4>
+      <form method="POST">
+        {% csrf_token %}
+        <div class="row">
+          {{ cash_form }}
+        </div>
+        <br/>
+        <button type="submit" class="btn btn-primary" id="id_cash_button" name="submit_cash">Submit</button>
+      </form>
+      <br/><br/>
 
-        <!-- CSV Upload -->
-        <h2>CSV Upload</h2>
-        <form method="POST" enctype="multipart/form-data">
-          {% csrf_token %}
-          <div class="row">
-            {{ csv_form }}
-          </div>
-          <br/>
-          <button type="submit" class="btn btn-primary" id="id_stock_button" name="submit_csv">Submit</button>
-        </form>
+      <!-- CSV Upload -->
+      <h2>CSV Upload</h2>
+      <form method="POST" enctype="multipart/form-data">
+        {% csrf_token %}
+        <div class="row">
+          {{ csv_form }}
+        </div>
+        <br/>
+        <button type="submit" class="btn btn-primary" id="id_stock_button" name="submit_csv">Submit</button>
+      </form>
 
-      </div>
     </div>
-
-    <!-- Container -->
   </div>
 {% endblock content %}
