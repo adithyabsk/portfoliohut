@@ -103,9 +103,11 @@ class TransactionManager(models.Manager):
             # cash action
             kwargs.pop("type")
             value = kwargs.pop("price") * kwargs.pop("quantity")
+            kwargs.pop("ticker")
             # subtract money if buying and add money if selling
             quantity = -1 if value > 0 else 1
             self.model(
+                ticker="-",
                 price=abs(value),
                 quantity=quantity,
                 type=FinancialActionType.INTERNAL_CASH,

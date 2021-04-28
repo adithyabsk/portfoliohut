@@ -101,5 +101,5 @@ def _get_sp_index(start_date=None):
 
     close_series = pd.Series(closes, index=dates).sort_index().astype(float)
     running_returns = close_series.dropna().pct_change()
-    cumulative_series = ((1 + running_returns).cumprod()) - 1
+    cumulative_series = (((1 + running_returns).cumprod()) - 1) * 100
     return cumulative_series
