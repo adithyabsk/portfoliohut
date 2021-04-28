@@ -12,8 +12,7 @@ from django.db import models, transaction
 from django.db.models import F, Sum
 from tqdm import tqdm
 
-from portfoliohut.models import FinancialActionType, Profile, Transaction
-from portfoliohut.models.transactions import CASH
+from portfoliohut.models import CashActions, FinancialActionType, Profile, Transaction
 
 TZ = pytz.timezone("UTC")
 tech_stock_list = [
@@ -158,7 +157,7 @@ def create_random_user(seed: int):
 
         # Check to make sure that profile balance is greater than 0 (otherwise you overspent)
         assert (
-            Transaction.objects.filter(profile=profile, type__in=CASH).aggregate(
+            Transaction.objects.filter(profile=profile, type__in=CashActions).aggregate(
                 total=Sum(
                     F("price") * F("quantity"), output_field=models.DecimalField()
                 )

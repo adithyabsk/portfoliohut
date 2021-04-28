@@ -40,7 +40,7 @@ class FinancialItem(models.Model):
 
 
 FinancialActionType = FinancialItem.FinancialActionType
-CASH = (
+CashActions = (
     FinancialActionType.EXTERNAL_CASH,
     FinancialActionType.INTERNAL_CASH,
 )
@@ -80,7 +80,7 @@ class TransactionManager(models.Manager):
                 ]
             )
             total_price = (
-                profile.transaction_set.filter(type__in=CASH)
+                profile.transaction_set.filter(type__in=CashActions)
                 .values("quantity", "price")
                 .aggregate(
                     total_price=Sum(
@@ -212,7 +212,7 @@ class PortfolioItem(models.Model):
         items = [f"profile={self.profile.user.get_full_name()}"]
         if self.type == FinancialActionType.EQUITY:
             items.extend([f"ticker={self.ticker}", f"average_price={self.price}"])
-        elif self.type in CASH:  # there is no
+        elif self.type in CashActions:  # there is no
             items.append(f"balance={self.price*self.quantity}")
 
         return items

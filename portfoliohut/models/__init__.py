@@ -2,6 +2,7 @@
 
 from .profile import Profile
 from .transactions import (
+    CashActions,
     EquityInfo,
     FinancialActionType,
     FinancialItem,
@@ -22,4 +23,5 @@ __all__ = [
     "TransactionTable",
     "FinancialItem",
     "FinancialActionType",
+    "CashActions",
 ]
