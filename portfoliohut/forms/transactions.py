@@ -1,15 +1,23 @@
 from datetime import datetime
 from decimal import Decimal
 
+import pandas as pd
 import pandas_market_calendars as mcal
 from django import forms
+from django.core.validators import FileExtensionValidator
 from django.db import models
 from django.db.models import F, Sum
 from django.forms.widgets import DateInput, TimeInput
 from django.utils import timezone
 from django.utils.translation import gettext_lazy as _
 
-from portfoliohut.models import CashActions, HistoricalEquity, Profile, Transaction
+from portfoliohut.models import (
+    CashActions,
+    FinancialActionType,
+    HistoricalEquity,
+    Profile,
+    Transaction,
+)
 
 
 class StockAction(models.TextChoices):
@@ -81,12 +89,10 @@ def _is_shares_available(
     return num_shares >= quantity
 
 
-class CSVForm(forms.Form):
-    file = forms.FileField(allow_empty_file=True)
-
-
 class BaseTransactionForm(forms.ModelForm):
     """Shared cleaning attributes between StockForm and CashForm."""
+
+    action = forms.CharField()  # Note this will be overridden
 
     class Meta:
         model = Transaction
@@ -106,6 +112,8 @@ class BaseTransactionForm(forms.ModelForm):
     def __init__(self, *args, **kwargs):
         self.profile = kwargs.pop("profile")
         super().__init__(*args, **kwargs)
+        today = timezone.now().date()
+        self.fields["date"].widget.attrs.update({"max": today})
 
     def clean(self):
         cleaned_data = super().clean()
@@ -113,7 +121,7 @@ class BaseTransactionForm(forms.ModelForm):
         # Validate time: Transaction cannot be in the future
         date = cleaned_data.get("date")
         time = cleaned_data.get("time")
-        if datetime.combine(date, time) > timezone.now():
+        if datetime.combine(date, time) > timezone.now().replace(tzinfo=None):
             raise forms.ValidationError("Invalid time: Time cannot be in the future")
 
         return cleaned_data
@@ -137,7 +145,19 @@ class BaseTransactionForm(forms.ModelForm):
 
 
 class StockForm(BaseTransactionForm):
-    action = forms.CharField(widget=forms.Select(choices=CashAction))
+    """Form that encodes stock purchase data.
+
+    Attributes:
+        action: a value from `StockAction`
+        date: The date of the stock purchase
+        time: The time of the stock purchase
+        price: The price of the stock
+        ticker: The ticker for the stock
+        quantity: The amount of stock
+
+    """
+
+    action = forms.CharField(widget=forms.Select(choices=StockAction.choices))
 
     class Meta(BaseTransactionForm.Meta):
         fields = {*BaseTransactionForm.Meta.fields, "ticker", "quantity"}
@@ -184,7 +204,7 @@ class StockForm(BaseTransactionForm):
 
         # Validate price: Price must be between the lowest and highest prices for the ticker on the
         # given daTe
-        price = self.cleaned_data.get("price")
+        price = cleaned_data.get("price")
         high = ticker_date_qset.first().high
         low = ticker_date_qset.first().low
         if not low <= price <= high:
@@ -195,8 +215,9 @@ class StockForm(BaseTransactionForm):
 
         # Validate BUY: User cannot buy stock worth more than the value of cash in user's account at
         # the time of purchase
-        action = self.cleaned_data.get("action")
-        quantity = self.cleaned_data.get("quantity")
+        # Pop action as it is not used downstream
+        action = cleaned_data.pop("action")
+        quantity = cleaned_data.get("quantity")
         if action == "buy":
             if not _is_cash_available(self.profile, date, time, price * quantity):
                 raise forms.ValidationError(
@@ -211,6 +232,10 @@ class StockForm(BaseTransactionForm):
                     f"Invalid SELL: There are not enough shares of {ticker} in your account on the "
                     "given date/time to complete this transaction"
                 )
+
+        # Set quantity based on buy/sell (negative quantity is sell in Transaction)
+        multiplier = 1 if action == StockAction.BUY else -1
+        cleaned_data["quantity"] *= multiplier
 
         return cleaned_data
 
@@ -230,9 +255,24 @@ class StockForm(BaseTransactionForm):
             )
         return quantity
 
+    def save(self, *args):
+        Transaction.objects.create_equity_transaction(
+            profile=self.profile, type=FinancialActionType.EQUITY, **self.cleaned_data
+        )
+
 
 class CashForm(BaseTransactionForm):
-    action = forms.CharField(widget=forms.Select(choices=CashAction))
+    """Form that encodes stock purchase data.
+
+    Attributes:
+        action: a value from `CashAction`
+        date: The date of the account action
+        time: The time of the account action
+        price: The amount to deposit of withdraw
+
+    """
+
+    action = forms.CharField(widget=forms.Select(choices=CashAction.choices))
 
     class Meta(BaseTransactionForm.Meta):
         labels = {
@@ -247,7 +287,8 @@ class CashForm(BaseTransactionForm):
 
         # Validate WITHDRAW: User cannot withdraw more money than is in user's account on the
         # date/time of transaction
-        action = cleaned_data.get("action")
+        # Pop action as it is not used downstream
+        action = cleaned_data.pop("action")
         price = cleaned_data.get("price")
         date = cleaned_data.get("date")
         time = cleaned_data.get("time")
@@ -259,6 +300,9 @@ class CashForm(BaseTransactionForm):
                     "date/time to complete this transaction"
                 )
 
+        # Set quantity based on buy/sell (negative quantity is withdraw in Transaction)
+        cleaned_data["quantity"] = 1 if action == StockAction.BUY else -1
+
         return cleaned_data
 
     def clean_action(self):
@@ -268,3 +312,24 @@ class CashForm(BaseTransactionForm):
                 "Invalid action: Cash transactions must be DEPOSIT or WITHDRAW"
             )
         return action
+
+    def save(self, *args):
+        Transaction.objects.create_cash_transaction(
+            profile=self.profile,
+            type=FinancialActionType.EXTERNAL_CASH,
+            **self.cleaned_data,
+        )
+
+
+class CSVForm(forms.Form):
+    csv_file = forms.FileField(
+        validators=[FileExtensionValidator(["csv"], "Only csv files are allowed")]
+    )
+
+    def clean_csv_file(self):
+        csv_file = self.cleaned_data.get("csv_file")
+
+        try:
+            self.csv_df = pd.read_csv(csv_file)
+        except (pd.errors.ParseError, ValueError):
+            raise forms.ValidationError("Could not read csv.")

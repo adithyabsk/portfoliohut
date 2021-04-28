@@ -1,8 +1,7 @@
 from django.contrib.auth.decorators import login_required
 from django.shortcuts import render
 
-from portfoliohut.forms import CashForm, StockForm
-from portfoliohut.models import FinancialItem, Transaction
+from portfoliohut.forms import CashForm, CSVForm, StockForm
 
 # def add_data_from_csv(request, file):
 #     try:
@@ -32,50 +31,6 @@ from portfoliohut.models import FinancialItem, Transaction
 #         return
 
 
-def _perform_stock_transaction(profile, stock_form):
-    action = stock_form.cleaned_data["action"]
-    multiplier = 1
-    if action == "sell":
-        multiplier = -1
-
-    Transaction(
-        type=FinancialItem.FinancialActionType.EQUITY,
-        profile=profile,
-        ticker=stock_form.cleaned_data["ticker"],
-        date=stock_form.cleaned_data["date"],
-        time=stock_form.cleaned_data["time"],
-        quantity=stock_form.cleaned_data["quantity"] * multiplier,
-        price=stock_form.cleaned_data["price"],
-    ).save()
-
-    Transaction(
-        type=FinancialItem.FinancialActionType.INTERNAL_CASH,
-        profile=profile,
-        ticker="-",
-        date=stock_form.cleaned_data["date"],
-        time=stock_form.cleaned_data["time"],
-        quantity=stock_form.cleaned_data["quantity"] * (-1) * multiplier,
-        price=stock_form.cleaned_data["price"],
-    ).save()
-
-
-def _perform_cash_transaction(profile, cash_form):
-    action = cash_form.cleaned_data["action"]
-    multiplier = 1
-    if action == "withdraw":
-        multiplier = -1
-
-    Transaction(
-        type=FinancialItem.FinancialActionType.EXTERNAL_CASH,
-        profile=profile,
-        ticker="-",
-        date=cash_form.cleaned_data["date"],
-        time=cash_form.cleaned_data["time"],
-        quantity=1 * multiplier,
-        price=cash_form.cleaned_data["price"],
-    ).save()
-
-
 @login_required
 def transaction_input(request):
     """
@@ -85,9 +40,10 @@ def transaction_input(request):
     context = {}
 
     # Initialize context with blank forms
-    context["stock_form"] = StockForm(profile=request.user.profile)
-    context["cash_form"] = CashForm(profile=request.user.profile)
-    # context["csv_form"] = CSVForm(profile=request.user.profile)
+    profile = request.user.profile
+    context["stock_form"] = StockForm(profile=profile)
+    context["cash_form"] = CashForm(profile=profile)
+    context["csv_form"] = CSVForm()
 
     # GET request
     if request.method == "GET":
@@ -95,25 +51,25 @@ def transaction_input(request):
 
     # Submitted StockForm with POST request
     if "submit_stock" in request.POST:
-        stock_form = StockForm(request.POST, profile=request.user.profile)
+        stock_form = StockForm(request.POST, profile=profile)
         context["stock_form"] = stock_form
 
         if not stock_form.is_valid():
             return render(request, "portfoliohut/add_transaction.html", context)
 
         context["message"] = "Stock transaction submitted"
-        _perform_stock_transaction(request.user.profile, stock_form)
+        stock_form.save()
 
     # Submitted CashForm with POST request
     elif "submit_cash" in request.POST:
-        cash_form = CashForm(request.POST, profile=request.user.profile)
+        cash_form = CashForm(request.POST, profile=profile)
         context["cash_form"] = cash_form
 
         if not cash_form.is_valid():
             return render(request, "portfoliohut/add_transaction.html", context)
 
         context["message"] = "Cash transaction submitted"
-        _perform_cash_transaction(request.user.profile, cash_form)
+        cash_form.save()
 
     # Submitted CSVForm with POST request
     # elif "submit_csv" in request.POST:

@@ -43,16 +43,16 @@
         <br/><br/>
 
         <!-- CSV Upload -->
-        <!-- <h2 class="col-md-6">CSV Upload</h2>
-        <form method = "POST" enctype="multipart/form-data">
-            {% csrf_token %}
-            <div class="row">
-              {{csv_form}}
-            </div>
-            <br/><button type="submit" class="btn btn-primary" id="id_stock_button" name="submit_csv">Submit</button>
-        </form> -->
+        <h2>CSV Upload</h2>
+        <form method="POST" enctype="multipart/form-data">
+          {% csrf_token %}
+          <div class="row">
+            {{ csv_form }}
+          </div>
+          <br/>
+          <button type="submit" class="btn btn-primary" id="id_stock_button" name="submit_csv">Submit</button>
+        </form>
 
-        <!-- Alignment -->
       </div>
     </div>
 
