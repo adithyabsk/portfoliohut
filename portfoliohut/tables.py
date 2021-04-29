@@ -1,4 +1,5 @@
 import itertools
+import math
 
 import django_tables2 as tables
 from django.shortcuts import reverse
@@ -10,12 +11,8 @@ from portfoliohut.models import PortfolioItem, Profile
 
 
 class PortfolioItemTable(tables.Table):
-    total_value = Column(
-        accessor=A("total_value"),
-    )
-    action = Column(
-        accessor=A("viewable_type"),
-    )
+    total_value = Column(accessor=A("total_value"))
+    action = Column(accessor=A("viewable_type"))
 
     class Meta:
         model = PortfolioItem
@@ -23,17 +20,22 @@ class PortfolioItemTable(tables.Table):
         sequence = ("action", "ticker", "created", "quantity", "price", "total_value")
         orderable = False
 
+    def render_total_value(self, value):
+        return "${:,}".format(value)
+
+    def render_price(self, value):
+        return "${:,}".format(value)
+
 
 class ReturnsTable(tables.Table):
     rank = tables.Column(empty_values=())
-    percent_returns = Column(
-        accessor=A("get_most_recent_return"),
-    )
+    percent_returns = Column(accessor=A("get_most_recent_return"))
 
     class Meta:
         model = Profile
         exclude = ("id", "bio", "profile_type")
         sequence = ("rank", "user", "percent_returns")
+        row_attrs = {"data-username": lambda record: record.user.username}
         orderable = False
 
     # Add row counter to django_tables2
@@ -45,15 +47,16 @@ class ReturnsTable(tables.Table):
         return next(self.row_counter)
 
     def render_percent_returns(self, value):
-        return "{:0.2f}".format(value)
+        if not math.isnan(value):
+            return "{:0.2f}%".format(value)
+        return "No Return %"
 
     # Add clickable link to user's profile page
     # https://stackoverflow.com/questions/22941424/django-tables2-create-extra-column-with-links
     def render_user(self, record):
         return mark_safe(
-            "<a href="
-            + reverse("profile", args=[record.user.username])
-            + ">"
-            + record.user.username
-            + "</a>"
+            "<a href={function}>{username}<a>".format(
+                function=reverse("profile", args=[record.user.username]),
+                username=record.user.username,
+            )
         )

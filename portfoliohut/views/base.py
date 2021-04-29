@@ -52,7 +52,11 @@ def global_competition(request):
         profiles = _sort_profiles_by_percent_returns(annotated_profiles)
 
         # Create the competition table
-        page = request.GET.get("page", 1)
+        page_num = 1
+        if request.user.profile in profiles:
+            rank = profiles.index(request.user.profile) + 1
+            page_num = math.ceil(rank / NUM_LEADERS)
+        page = request.GET.get("page", page_num)
         context["competition_table"] = _build_competition_table(profiles, page)
 
         return render(request, "portfoliohut/stream.html", context)
@@ -86,10 +90,14 @@ def friends_competition(request):
             friends_names.append(profile.user.first_name + " " + profile.user.last_name)
 
         # Sort friends by their percent returns
+        my_profile.returns = my_profile.get_most_recent_return()
+        annotated_profiles.append(my_profile)
         profiles = _sort_profiles_by_percent_returns(annotated_profiles)
 
         # Create the competition table
-        page = request.GET.get("page", 1)
+        rank = profiles.index(my_profile) + 1
+        page_num = math.ceil(rank / NUM_LEADERS)
+        page = request.GET.get("page", page_num)
         context["competition_table"] = _build_competition_table(profiles, page)
 
         # Create the competition graph

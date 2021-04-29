@@ -5,7 +5,7 @@ from portfoliohut.graph import _get_sp_index, combine_index_user, multi_plot
 from portfoliohut.models import Profile
 from portfoliohut.tables import PortfolioItemTable
 
-NUM_TRANSACTIONS = 5
+NUM_TRANSACTIONS = 10
 
 
 @login_required

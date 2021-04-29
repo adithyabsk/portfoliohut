@@ -7,12 +7,13 @@
 {% load render_table from django_tables2 %}
 
 {% block content %}
-  <!-- Page Title -->
-  <div class="row">
-    <h1 class="text-center" id="id_page_name">{{ page_name }}</h1>
-  </div>
-  <!-- Friend's Comp Redirection -->
-  {% if profiles is None and page_name == "Friends Competition" %}
+  <div class="container">
+    <!-- Page Title -->
+    <div class="row mt-5">
+      <h1 class="text-center" id="id_page_name">{{ page_name }}</h1>
+    </div>
+    <!-- Friend's Comp Redirection -->
+    {%if not competition_table and page_name == "Friends Competition" %}
     <div class="row mt-5">
       <h3 class="text-center">Make some friends! You can find some amazing traders
         <a href="{% url 'global-competition' %}">here</a>.
