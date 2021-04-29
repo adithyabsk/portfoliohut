@@ -2,8 +2,8 @@ from django.contrib.auth.decorators import login_required
 from django.shortcuts import get_object_or_404, render
 
 from portfoliohut.graph import _get_sp_index, combine_index_user, multi_plot
-from portfoliohut.models import Profile
-from portfoliohut.tables import PortfolioItemTable
+from portfoliohut.models import FinancialActionType, Profile
+from portfoliohut.tables import PortfolioItemTable, TransactionTable
 
 NUM_TRANSACTIONS = 10
 
@@ -19,11 +19,16 @@ def portfolio(request):
 
         # Get current portfolio
         current_portfolio_table = PortfolioItemTable(profile.portfolioitem_set.all())
-        current_portfolio_table.paginate(
+        current_transactions_table = TransactionTable(
+            profile.transaction_set.filter(
+                type__in=[FinancialActionType.EXTERNAL_CASH, FinancialActionType.EQUITY]
+            ).all()
+        )
+        current_transactions_table.paginate(
             page=request.GET.get("page", 1), per_page=NUM_TRANSACTIONS
         )
 
-        # Build graph
+        # Build
         graph_data = profile.get_cumulative_returns()
         graph = None
         if not graph_data.empty:
@@ -38,5 +43,6 @@ def portfolio(request):
             {
                 "current_portfolio_table": current_portfolio_table,
                 "graph": graph,
+                "current_transactions_table": current_transactions_table,
             },
         )

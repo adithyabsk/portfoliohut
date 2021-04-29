@@ -10,7 +10,6 @@ from .transactions import (
     PortfolioItem,
     PortfolioReturn,
     Transaction,
-    TransactionTable,
 )
 
 __all__ = [
@@ -20,7 +19,6 @@ __all__ = [
     "HistoricalEquity",
     "EquityInfo",
     "PortfolioReturn",
-    "TransactionTable",
     "FinancialItem",
     "FinancialActionType",
     "CashActions",

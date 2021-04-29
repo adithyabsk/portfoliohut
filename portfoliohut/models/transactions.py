@@ -2,7 +2,6 @@ from datetime import timedelta
 from decimal import Decimal
 from typing import TYPE_CHECKING, List
 
-import django_tables2 as tables
 import pandas as pd
 import pandas_market_calendars as mcal
 import yfinance as yf
@@ -182,6 +181,12 @@ class Transaction(FinancialItem):
             items.append(f"quantity={abs(self.quantity)}")
 
         return items
+
+    def quantity_annotator(self):
+        if self.quantity < 0:
+            return "Sell"
+        else:
+            return "Buy"
 
 
 # Note: It made more sense for this to be its own class rather than for it to inherit from the base
@@ -376,29 +381,3 @@ class PortfolioReturn(models.Model):
 
     def __str__(self):
         return f"profile={self.profile}, floating_return={self.floating_return:.2f}"
-
-
-class TransactionTable(tables.Table):
-    """
-    This class is a helper class used by django_tables2. The library can
-    convert a DB table to a HTML table based on the input model. This
-    Columns can be customized with respect to user requirements. i.e no ID
-    displayed in this table.
-    Has in built pagination feature as well.
-    """
-
-    class Meta:
-        model = Transaction
-        sequence = (
-            "type",
-            "ticker",
-            "price",
-            "quantity",
-            "date",
-            "time",
-        )
-        exclude = (
-            "profile",
-            "id",
-        )
-        attrs = {"width": "160%"}

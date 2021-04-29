@@ -7,7 +7,7 @@ from django.utils.html import mark_safe
 from django_tables2 import Column
 from django_tables2.utils import A
 
-from portfoliohut.models import PortfolioItem, Profile
+from portfoliohut.models import PortfolioItem, Profile, Transaction
 
 
 class PortfolioItemTable(tables.Table):
@@ -60,3 +60,31 @@ class ReturnsTable(tables.Table):
                 username=record.user.username,
             )
         )
+
+
+class TransactionTable(tables.Table):
+    """
+    This class is a helper class used by django_tables2. The library can
+    convert a DB table to a HTML table based on the input model. This
+    Columns can be customized with respect to user requirements. i.e no ID
+    displayed in this table.
+    Has in built pagination feature as well.
+    """
+
+    action = tables.Column(accessor="quantity_annotator", verbose_name="Action")
+
+    class Meta:
+        model = Transaction
+        sequence = (
+            "type",
+            "ticker",
+            "date",
+            "price",
+        )
+        exclude = (
+            "profile",
+            "id",
+            "time",
+            "quantity",
+        )
+        attrs = {"width": "100%"}

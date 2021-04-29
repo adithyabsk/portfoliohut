@@ -17,8 +17,28 @@
       {% endif %}
     </div>
 
-    <h4 class="text-center mt-2 mb-2">Current Portfolio Summary</h4>
-    {% render_table current_portfolio_table %}
+    <div class="list-group list-group-horizontal" id="myList" role="tablist">
+    <a class="list-group-item list-group-item-action active" data-toggle="list" href="#profile" role="tab">Current Transaction Summary</a>
+    <a class="list-group-item list-group-item-action " data-toggle="list" href="#home" role="tab">Current Portfolio Summary</a>
+</div>
+
+<!-- Tab panes -->
+<div class="tab-content">
+    <div class="tab-pane" id="home" role="tabpanel">
+      <hr/>
+      <h4 class="text-center mt-2 mb-2 ">Current Portfolio Summary</h4>
+      <hr/>
+
+      {% render_table current_portfolio_table %}
+      <br>
+    </div>
+
+    <div class="tab-pane active" id="profile" role="tabpanel">
+      <hr/>
+      <h4 class="text-center mt-2 mb-2">Current Transaction Summary</h4>
+      <hr/>
+      {% render_table current_transactions_table %}
+  </div>
 
     {#    <!-- Summary Statistics -->#}
     {#    <h5>Portfolio Value: {{ total }}</h5>#}
