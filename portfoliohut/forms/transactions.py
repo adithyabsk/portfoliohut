@@ -1,18 +1,13 @@
-from datetime import datetime
-from decimal import Decimal
-
 import pandas as pd
 import pandas_market_calendars as mcal
+from bootstrap_datepicker_plus import DateTimePickerInput
 from django import forms
 from django.core.validators import FileExtensionValidator
 from django.db import models, transaction
-from django.db.models import F, Sum
-from django.forms.widgets import DateInput, TimeInput
 from django.utils import timezone
 from django.utils.translation import gettext_lazy as _
 
 from portfoliohut.models import (
-    CashActions,
     FinancialActionType,
     HistoricalEquity,
     Profile,
@@ -30,77 +25,6 @@ class CashAction(models.TextChoices):
     WITHDRAW = "withdraw", _("Withdraw")
 
 
-def _is_cash_available(
-    profile: Profile, date: datetime.date, time: datetime.time, value: Decimal
-) -> bool:
-    """Validate if a `Profile` contains enough balance to fund a transaction.
-
-    Args:
-        profile: The `User.profile` instance
-        date: The date of the transaction
-        time: The time of the transaction
-        value: The cost of the transaction
-
-    """
-    cash_transactions = Transaction.objects.filter(
-        profile=profile,
-        type__in=CashActions,
-        date__lte=date,
-    ).exclude(date=date, time__gt=time)
-
-    if not cash_transactions.exists():
-        return False
-
-    cash_at_time = cash_transactions.aggregate(
-        available_cash=Sum(
-            F("price") * F("quantity"), output_field=models.DecimalField()
-        )
-    )["available_cash"]
-
-    return cash_at_time >= value
-
-
-def _is_shares_available(
-    profile: Profile,
-    date: datetime.date,
-    time: datetime.time,
-    ticker: str,
-    quantity: int,
-) -> bool:
-    """Validate if there are enough shares for a sell action.
-
-    Args:
-        profile: The `User.profile` instance
-        date: The date of the transaction
-        time: The time of the transaction
-        ticker: The stock's ticker
-        quantity: The number of shares to be sold
-
-    """
-    stock_transactions = Transaction.objects.filter(
-        profile=profile, ticker=ticker, date__lte=date
-    ).exclude(date=date, time__gt=time)
-
-    if not stock_transactions.exists():
-        return False
-
-    num_shares = stock_transactions.aggregate(sum=Sum("quantity"))["sum"]
-
-    return num_shares >= quantity
-
-
-def _is_duplicate(
-    profile: Profile,
-    date: datetime.date,
-    time: datetime.time,
-    ticker: str,
-):
-    tqset = Transaction.objects.filter(
-        profile=profile, date=date, time=time, ticker=ticker
-    )
-    return tqset.exists()
-
-
 class BaseTransactionForm(forms.ModelForm):
     """Shared cleaning attributes between StockForm and CashForm."""
 
@@ -108,44 +32,29 @@ class BaseTransactionForm(forms.ModelForm):
 
     class Meta:
         model = Transaction
-        fields = {"action", "date", "time", "price"}
+        fields = {"action", "date_time", "price"}
         labels = {
             "action": "Transaction Type",
-            "date": "Date",
-            "time": "Time (ET)",
-        }
-        widgets = {
-            "date": DateInput(attrs={"type": "date"}, format="%Y-%m-%d"),
-            "time": TimeInput(attrs={"type": "time"}),
+            "date_time": "Date/Time (ET)",
         }
 
-    field_order = ["action", "date", "time"]
+    field_order = ["action", "date_time"]
 
     def __init__(self, *args, **kwargs):
-        self.profile = kwargs.pop("profile", None)
+        self.profile: Profile = kwargs.pop("profile", None)
         super().__init__(*args, **kwargs)
-        today = timezone.now().date()
-        self.fields["date"].widget.attrs.update({"max": today})
-
-    def clean(self):
-        cleaned_data = super().clean()
-
-        # Validate time: Transaction cannot be in the future
-        date = cleaned_data.get("date")
-        time = cleaned_data.get("time")
-        if datetime.combine(date, time) > timezone.now().replace(tzinfo=None):
-            raise forms.ValidationError("Invalid time: Time cannot be in the future")
-
-        return cleaned_data
+        self.fields["date_time"].widget = DateTimePickerInput(
+            options={"maxDate": timezone.now().strftime("%Y-%m-%d 23:59:59")},
+        )
 
     def clean_action(self):
         raise NotImplementedError
 
-    def clean_date(self):
-        date = self.cleaned_data.get("date")
-        if date > timezone.now().date():
+    def clean_date_time(self):
+        date_time = self.cleaned_data.get("date_time")
+        if date_time > timezone.now():
             raise forms.ValidationError("Invalid date: Date cannot be in the future")
-        return date
+        return date_time
 
     def clean_price(self):
         price = self.cleaned_data.get("price")
@@ -161,8 +70,7 @@ class StockForm(BaseTransactionForm):
 
     Attributes:
         action: a value from `StockAction`
-        date: The date of the stock purchase
-        time: The time of the stock purchase
+        date_time: The date and time of the stock purchase
         price: The price of the stock
         ticker: The ticker for the stock
         quantity: The amount of stock
@@ -197,37 +105,35 @@ class StockForm(BaseTransactionForm):
             raise forms.ValidationError("Invalid ticker: Ticker must be in the NYSE")
 
         # Validate date: NYSE must be open on the given day and the date cannot be in the future
-        date = cleaned_data.get("date")
-        ticker_date_qset = ticker_qset.filter(date=date)
+        date_time = cleaned_data.get("date_time")
+        date = date_time.date()
+        ticker_date_qset = ticker_qset.filter(date=date_time.date())
         if not ticker_date_qset.exists():
             raise forms.ValidationError(
-                "Invalid date: NYSE was not open on the given date, or the date is in the future"
+                "Invalid date: Could not find the ticker on the given date or the date is in the future"
             )
 
         # Validate time: NYSE must be open at the given time of transaction
-        time = cleaned_data.get("time")
         nyse = mcal.get_calendar("NYSE")
-        day = nyse.schedule(start_date=date, end_date=date)
-        for m in ["market_open", "market_close"]:
-            # Convert times to ET https://github.com/rsheftel/pandas_market_calendars/issues/42
-            day[m] = day[m].dt.tz_convert("America/New_York")
-        market_open = day.iloc[0]["market_open"].time()
-        market_close = day.iloc[0]["market_close"].time()
-        if not market_open <= time <= market_close:
+        # the times are in UTC by default but incoming times are in ET
+        day_df = nyse.schedule(start_date=date, end_date=date)
+        cols = ["market_open", "market_close"]
+        market_open, market_close = day_df.loc[day_df.index[0], cols]
+        if not market_open <= date_time <= market_close:
             raise forms.ValidationError(
-                f"Invalid time: Time of purchase must be between {market_open.strftime('%I:%M %p')}"
-                f" and {market_close.strftime('%I:%M %p')} on {date.strftime('%m/%d/%Y')}"
+                f"Invalid time: Time of purchase must be between {market_open:%I:%M %p)}"
+                f" and {market_close:%I:%M %p} on {date:%m/%d/%Y}"
             )
 
         # Validate price: Price must be between the lowest and highest prices for the ticker on the
-        # given daTe
+        # given date
         price = cleaned_data.get("price")
         high = ticker_date_qset.first().high
         low = ticker_date_qset.first().low
         if not low <= price <= high:
             raise forms.ValidationError(
                 f"Invalid stock price: Price must be between ${low} and ${high} on "
-                f"{date.strftime('%m/%d/%Y')}"
+                f"{date: %m/%d/%Y)}"
             )
 
         # Validate BUY: User cannot buy stock worth more than the value of cash in user's account at
@@ -236,7 +142,7 @@ class StockForm(BaseTransactionForm):
         action = cleaned_data.pop("action")
         quantity = cleaned_data.get("quantity")
         if action == "buy":
-            if not _is_cash_available(self.profile, date, time, price * quantity):
+            if not self.profile.is_cash_available(date_time, price * quantity):
                 raise forms.ValidationError(
                     "Invalid BUY: There is not enough cash in your account on the given date/time "
                     "to complete this transaction"
@@ -244,13 +150,13 @@ class StockForm(BaseTransactionForm):
 
         # Validate SELL: User can't sell more shares than user owned on the date/time of sale
         else:
-            if not _is_shares_available(self.profile, date, time, ticker, quantity):
+            if not self.profile.is_shares_available(date_time, ticker, quantity):
                 raise forms.ValidationError(
                     f"Invalid SELL: There are not enough shares of {ticker} in your account on the "
                     "given date/time to complete this transaction"
                 )
 
-        if _is_duplicate(self.profile, date, time, ticker):
+        if self.profile.is_duplicate_transaction(date_time, ticker):
             raise forms.ValidationError("This transaction looks like a duplicate")
 
         # Set quantity based on buy/sell (negative quantity is sell in Transaction)
@@ -286,8 +192,7 @@ class CashForm(BaseTransactionForm):
 
     Attributes:
         action: a value from `CashAction`
-        date: The date of the account action
-        time: The time of the account action
+        date_time: The date/time of the account action
         price: The amount to deposit of withdraw
 
     """
@@ -315,16 +220,15 @@ class CashForm(BaseTransactionForm):
         # Pop action as it is not used downstream
         action = cleaned_data.pop("action")
         price = cleaned_data.get("price")
-        date = cleaned_data.get("date")
-        time = cleaned_data.get("time")
+        date_time = cleaned_data.get("date_time")
         if action == CashAction.WITHDRAW:
-            if not _is_cash_available(self.profile, date, time, price):
+            if not self.profile.is_cash_available(date_time, price):
                 raise forms.ValidationError(
                     "Invalid WITHDRAW: There is not enough cash in your account on the given "
                     "date/time to complete this transaction"
                 )
 
-        if _is_duplicate(self.profile, date, time, "-"):
+        if self.profile.is_duplicate_transaction(date_time, "-"):
             raise forms.ValidationError("This transaction looks like a duplicate")
 
         # Set quantity based on buy/sell (negative quantity is withdraw in Transaction)
@@ -367,8 +271,7 @@ class CSVForm(forms.Form):
 
         if csv_df.columns.tolist() != [
             "action",
-            "date",
-            "time",
+            "date_time",
             "price",
             "ticker",
             "quantity",
@@ -387,4 +290,4 @@ class CSVForm(forms.Form):
 
                 row_form.save(skip_portfolio_reset=True)
 
-            Transaction.objects._reset_portfolio_cache(profile=self.profile)
+            Transaction.objects.reset_portfolio_cache(profile=self.profile)

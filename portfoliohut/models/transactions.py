@@ -16,29 +16,12 @@ if TYPE_CHECKING:
     from .profile import Profile
 
 
-class FinancialItem(models.Model):
-    class FinancialActionType(models.TextChoices):
-        EQUITY = "EQ", _("Equity")
-        EXTERNAL_CASH = "EC", _("External Cash")
-        INTERNAL_CASH = "IC", _("Internal Cash")
-
-    class Meta:
-        abstract = True
-
-    type = models.CharField(
-        max_length=4, blank=False, choices=FinancialActionType.choices
-    )
-    ticker = models.CharField(max_length=20, blank=False)  # For cash actions use "-"
-    date = models.DateField(blank=False)
-
-    def display_items(self):
-        return [f"date={self.date}"]
-
-    def __str__(self):
-        return ", ".join(self.display_items())
+class FinancialActionType(models.TextChoices):
+    EQUITY = "EQ", _("Equity")
+    EXTERNAL_CASH = "EC", _("External Cash")
+    INTERNAL_CASH = "IC", _("Internal Cash")
 
 
-FinancialActionType = FinancialItem.FinancialActionType
 CashActions = (
     FinancialActionType.EXTERNAL_CASH,
     FinancialActionType.INTERNAL_CASH,
@@ -49,7 +32,7 @@ CashActions = (
 #       that were updated. We don't really need to delete all of the portfolio items. We just need
 #       to recompute the particular ticker as well as the cash balance.
 class TransactionManager(models.Manager):
-    def _reset_portfolio_cache(self, profile: "Profile"):
+    def reset_portfolio_cache(self, profile: "Profile"):
         with transaction.atomic():
             # Delete previous snapshot
             profile.portfolioitem_set.all().delete()
@@ -119,12 +102,12 @@ class TransactionManager(models.Manager):
     def create_equity_transaction(self, skip_portfolio_reset=False, **kwargs):
         self._create_equity_transaction(**kwargs)
         if not skip_portfolio_reset:
-            self._reset_portfolio_cache(profile=kwargs.get("profile"))
+            self.reset_portfolio_cache(profile=kwargs.get("profile"))
 
     def create_cash_transaction(self, skip_portfolio_reset=False, **kwargs):
         self._create_cash_transaction(**kwargs)
         if not skip_portfolio_reset:
-            self._reset_portfolio_cache(profile=kwargs.get("profile"))
+            self.reset_portfolio_cache(profile=kwargs.get("profile"))
 
     def bulk_create(self, objs, batch_size=None, ignore_conflicts=False, profile=None):
         objs: List[Transaction] = super().bulk_create(
@@ -137,12 +120,12 @@ class TransactionManager(models.Manager):
                 if obj.profile.pk not in pks:
                     profiles.append(obj.profile)
             for profile in profiles:
-                self._reset_portfolio_cache(profile=profile)
+                self.reset_portfolio_cache(profile=profile)
         else:
-            self._reset_portfolio_cache(profile=profile)
+            self.reset_portfolio_cache(profile=profile)
 
 
-class Transaction(FinancialItem):
+class Transaction(models.Model):
     """An individual transaction.
 
     You must use `Transaction.objects.create_equity_transaction` or `Transaction.objects.create_cash_transaction`
@@ -152,11 +135,18 @@ class Transaction(FinancialItem):
 
     """
 
+    class Meta:
+        unique_together = ("profile", "ticker", "date_time")
+
     objects = TransactionManager()
+    type = models.CharField(
+        max_length=4, blank=False, choices=FinancialActionType.choices
+    )
+    ticker = models.CharField(max_length=20, blank=False)  # For cash actions use "-"
     profile = models.ForeignKey(
         "portfoliohut.Profile", blank=False, on_delete=models.PROTECT
     )
-    time = models.TimeField(blank=False)
+    date_time = models.DateTimeField(blank=False)
     quantity = models.IntegerField(
         blank=False
     )  # positive for buy/deposit negative for sell/withdraw
@@ -168,8 +158,10 @@ class Transaction(FinancialItem):
     )  # always greater than zero
 
     def display_items(self):
-        items = super().display_items()
-        items.append(f"profile={self.profile.user.get_full_name()}")
+        items = [
+            f"date={self.date_time}",
+            f"profile={self.profile.user.get_full_name()}",
+        ]
         if self.type == FinancialActionType.EQUITY:
             items.append(f"ticker={self.ticker}")
         elif self.type == FinancialActionType.EXTERNAL_CASH:
@@ -188,9 +180,10 @@ class Transaction(FinancialItem):
         else:
             return "Buy"
 
+    def __str__(self):
+        return ", ".join(self.display_items())
 
-# Note: It made more sense for this to be its own class rather than for it to inherit from the base
-#       class. This is because we want to auto add the date.
+
 class PortfolioItem(models.Model):
     """An item in a portfolio."""
 
@@ -300,7 +293,7 @@ class HistoricalEquityManager(models.Manager):
                 return HistoricalEquity.objects.none()
 
 
-class HistoricalEquity(FinancialItem):
+class HistoricalEquity(models.Model):
     """Hold the history of a particular equity over time."""
 
     class Meta:
@@ -311,6 +304,11 @@ class HistoricalEquity(FinancialItem):
         )
 
     objects = HistoricalEquityManager()
+    type = models.CharField(
+        max_length=4, blank=False, choices=FinancialActionType.choices
+    )
+    ticker = models.CharField(max_length=20, blank=False)  # For cash actions use "-"
+    date = models.DateField(blank=False)
     open = models.DecimalField(max_digits=100, decimal_places=2, blank=False)
     high = models.DecimalField(max_digits=100, decimal_places=2, blank=False)
     low = models.DecimalField(max_digits=100, decimal_places=2, blank=False)
@@ -320,11 +318,14 @@ class HistoricalEquity(FinancialItem):
     stock_splits = models.IntegerField()
 
     def display_items(self):
-        items = super().display_items()
+        items = [f"date={self.date}"]
         if self.type == FinancialActionType.EQUITY:
             items.extend([f"ticker={self.ticker}"])
 
         return items
+
+    def __str__(self):
+        return ", ".join(self.display_items())
 
 
 class EquityInfoManager(models.Manager):
@@ -356,7 +357,7 @@ class EquityInfoManager(models.Manager):
 
 class EquityInfo(models.Model):
     objects = EquityInfoManager()
-    ticker = models.CharField(max_length=20, blank=False)
+    ticker = models.CharField(max_length=20, blank=False, unique=True)
     logo_url = models.URLField(blank=False)
 
     address1 = models.CharField(max_length=255)

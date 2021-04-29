@@ -78,7 +78,7 @@ class TransactionTable(tables.Table):
         sequence = (
             "type",
             "ticker",
-            "date",
+            "date_time",
             "price",
         )
         exclude = (

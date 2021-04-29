@@ -1,9 +1,17 @@
+from datetime import datetime
+from decimal import Decimal
+
 import pandas as pd
 from django.contrib.auth.models import User
 from django.db import models
-from django.db.models import QuerySet
+from django.db.models import F, QuerySet, Sum
 
-from .transactions import FinancialActionType, HistoricalEquity, Transaction
+from .transactions import (
+    CashActions,
+    FinancialActionType,
+    HistoricalEquity,
+    Transaction,
+)
 
 PROFILE_TYPE_ACTIONS = (
     ("public", "PUBLIC"),
@@ -43,7 +51,7 @@ def _calc_returns(transaction_qset: "QuerySet[Transaction]"):
     if not relevant_transaction_qset.exists():
         return empty_series
 
-    start_date = relevant_transaction_qset.first().date
+    start_date = relevant_transaction_qset.first().date_time.date()
     # Remove cash balance ticker
     distinct_tickers = set(
         relevant_transaction_qset.filter(type=FinancialActionType.EQUITY).values_list(
@@ -71,7 +79,7 @@ def _calc_returns(transaction_qset: "QuerySet[Transaction]"):
     for ticker in distinct_tickers:
         dates, quantities = zip(
             *relevant_transaction_qset.filter(ticker=ticker).values_list(
-                "date", "quantity"
+                "date_time__date", "quantity"
             )
         )
         quantity_series_list.append(
@@ -89,7 +97,7 @@ def _calc_returns(transaction_qset: "QuerySet[Transaction]"):
     # Also build the cumulative sale cash balance at each date.
     sale_cash_qset = relevant_transaction_qset.filter(
         type=FinancialActionType.INTERNAL_CASH
-    ).values_list("date", "price")
+    ).values_list("date_time__date", "price")
     if sale_cash_qset.exists():
         sale_dates, sale_prices = zip(*sale_cash_qset)
         sale_cash_series = (
@@ -135,6 +143,56 @@ class Profile(models.Model):
             return self.get_cumulative_returns().iloc[-1]
         else:
             return float("nan")
+
+    def is_cash_available(self, date_time: datetime, value: Decimal) -> bool:
+        """Validate if `Profile` contains enough balance to fund a transaction on a particular date.
+
+        Args:
+            date_time: The date of the transaction
+            value: The cost of the transaction
+
+        """
+        cash_transactions = self.transaction_set.filter(
+            type__in=CashActions,
+            date_time__lte=date_time,
+        )
+
+        if not cash_transactions.exists():
+            return False
+
+        cash_at_time = cash_transactions.aggregate(
+            available_cash=Sum(
+                F("price") * F("quantity"), output_field=models.DecimalField()
+            )
+        )["available_cash"]
+
+        return cash_at_time >= value
+
+    def is_shares_available(
+        self, date_time: datetime, ticker: str, quantity: int
+    ) -> bool:
+        """Validate if Profile has enough shares for a sell action on a particular date.
+
+        Args:
+            date_time: The date/time of the transaction
+            ticker: The stock's ticker
+            quantity: The number of shares to be sold
+
+        """
+        stock_transactions = self.transaction_set.filter(
+            ticker=ticker, date_time__lte=date_time
+        )
+
+        if not stock_transactions.exists():
+            return False
+
+        num_shares = stock_transactions.aggregate(sum=Sum("quantity"))["sum"]
+
+        return num_shares >= quantity
+
+    def is_duplicate_transaction(self, date_time: datetime.date, ticker: str):
+        """Check if `Profile` contains a matching transaction"""
+        return self.transaction_set.filter(date_time=date_time, ticker=ticker).exists()
 
     # def get_portfolio_details(self):
     #     # we are not using a query set here because we need to compute the final portfolio from the

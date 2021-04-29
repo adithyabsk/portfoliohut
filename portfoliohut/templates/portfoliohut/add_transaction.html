@@ -1,15 +1,17 @@
 {% extends 'portfoliohut/base.html' %}
 {% load static %}
+{% load bootstrap4 %}
 {% block head %}
   <link rel="stylesheet" href="{% static 'portfoliohut/css/remove-asterisk.css' %}">
+  {# Add django-bootstrap-datepicker-plus required tag #}
+  {{ cash_form.media }}
+  {{ stock_form.media }}
   <title>Add Transactions</title>
 {% endblock head %}
 
 {% block content %}
   <!-- Page Title -->
-  <div class="row mt-5">
-    <h1 class="text-center" id="id_page_name">Add Transactions</h1>
-  </div>
+  <h1 class="text-center" id="id_page_name">Add Transactions</h1>
 
   <!-- Form Alignment -->
   <div class="row m-3 d-flex justify-content-center">
@@ -20,36 +22,34 @@
       <h4>Stock Transaction</h4>
       <form method="POST">
         {% csrf_token %}
-        <div class="row">
-          {{ stock_form }}
-        </div>
-        <br/>
-        <button type="submit" class="btn btn-primary" id="id_stock_button" name="submit_stock">Submit</button>
+        {% bootstrap_form stock_form %}
+        {% buttons %}
+          <button type="submit" class="btn btn-primary" id="id_stock_button" name="submit_stock">Submit</button>
+          <button type="reset" class="btn btn-primary" id="id_stock_reset_button" name="reset_stock"onClick="this.form.reset()">Reset</button>
+        {% endbuttons %}
       </form>
-      <br/>
 
       <!-- Cash Transaction -->
       <h4>Cash Transaction</h4>
       <form method="POST">
         {% csrf_token %}
-        <div class="row">
-          {{ cash_form }}
-        </div>
-        <br/>
-        <button type="submit" class="btn btn-primary" id="id_cash_button" name="submit_cash">Submit</button>
+        {% bootstrap_form cash_form %}
+        {% buttons %}
+          <button type="submit" class="btn btn-primary" id="id_cash_button" name="submit_cash">Submit</button>
+          <button type="reset" class="btn btn-primary" id="id_cash_reset_button" name="reset_cash" onClick="this.form.reset()">Reset</button>
+        {% endbuttons %}
       </form>
-      <br/><br/>
 
       <!-- CSV Upload -->
       <h2>CSV Upload</h2>
       Please use <a href="{% static 'portfoliohut/sample_upload.csv' %}" download>this csv format</a> to bulk upload transactions.
       <form method="POST" enctype="multipart/form-data">
         {% csrf_token %}
-        <div class="row">
-          {{ csv_form }}
-        </div>
-        <br/>
-        <button type="submit" class="btn btn-primary" id="id_csv_button" name="submit_csv">Submit</button>
+        {% bootstrap_form csv_form %}
+        {% buttons %}
+          <button type="submit" class="btn btn-primary" id="id_csv_button" name="submit_csv">Submit</button>
+          <button type="reset" class="btn btn-primary" id="id_csv_reset_button" name="reset_csv" onClick="this.form.reset()">Reset</button>
+        {% endbuttons %}
       </form>
 
     </div>

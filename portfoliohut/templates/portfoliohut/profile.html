@@ -4,30 +4,29 @@
 {% endblock head %}
 
 {% block content %}
-  <!-- Page Title -->
-    <div class = "text-center text-dark no-padding py-4">
-      <h1>
-        {{ profile.user.first_name }} {{ profile.user.last_name }}     </h1>
-   </div>
+  <h1 class="text-center">Profile</h1>
+  <h1 class="text-center">{{ profile.user.full_name }}</h1>
 
-   <div class="p-0 d-flex justify-content-center text-center">
+  <div class="p-0 d-flex justify-content-center text-center">
     <ul class="list-inline mb-0 border border-dark px-4">
+      <li class="list-inline-item">
+        <h5 class="font-weight-bold mb-0 d-block">
+          {{ profile.friends.all.count }}
+        </h5>
+        <small class="text-muted"><i class="fas fa-image mr-0"></i>Friends</small>
+      </li>
+      {% if profile.profile_type == 'public' or profile.user == request.user or profile in request.user.friends.all %}
         <li class="list-inline-item">
-            <h5 class="font-weight-bold mb-0 d-block">{{ profile.friends.all.count}}</h5><small class="text-muted"> <i class="fas fa-image mr-0"></i>Friends</small>
+          <h5 class="font-weight-bold mb-0 d-block "> {% firstof profile.get_most_recent_return|floatformat:-2 "No Return " %}%</h5>
+          <small class="text-muted"> <i class="fas fa-user mr-0"></i>Current Returns</small>
         </li>
-        {% if profile.profile_type == 'public' or profile.user == request.user or profile in request.user.friends.all %}
-        <li class="list-inline-item">
-            <h5 class="font-weight-bold mb-0 d-block "> {% firstof profile.get_most_recent_return|floatformat:-2 "No Return " %}%</h5><small class="text-muted"> <i class="fas fa-user mr-0"></i>Current Returns</small>
-        </li>
-        {% endif %}
-
+      {% endif %}
     </ul>
-</div>
+  </div>
 
   <!-- Formatting -->
   <div class="row d-flex justify-content-center">
     <div class="col-md-6">
-
       <!-- Social Info -->
       {% if profile.id != request.user.id %}
         <div align="left">
@@ -54,7 +53,7 @@
 
       </br>
       <!-- Display Bio and % Returns Public/Private Selector -->
-      <h3  >About:</h3>
+      <h3>About:</h3>
       {% if profile.id == request.user.id %}
         <form enctype="multipart/form-data" action="{% url 'profile' request.user.username %}" method="post">
           <div class="row">{{ profile_form }}</div>
@@ -87,96 +86,98 @@
       </table>
 
 
-<hr/>
+      <hr/>
       <!-- List Group-->
       <!-- List group -->
-{% if profile.id == request.user.id %}
-
-<div class="list-group list-group-horizontal" id="myList" role="tablist">
-  <a class="list-group-item list-group-item-action active" data-toggle="list" href="#friend_requests" role="tab">Friend Requests</a>
-  <a class="list-group-item list-group-item-action" data-toggle="list" href="#friends" role="tab">Friends</a>
-  <!-- <a class="list-group-item list-group-item-action" data-toggle="list" href="#messages" role="tab">Messages</a>
-  <a class="list-group-item list-group-item-action" data-toggle="list" href="#settings" role="tab">Settings</a> -->
-</div>
-
-{% endif %}
-
-<!-- Tab panes -->
-<div class="tab-content">
-
-  <div class="tab-pane fade show active" id="friend_requests" role = "tabpanel">
-
-      <!-- Display Friend Features -->
       {% if profile.id == request.user.id %}
-        <br/><h3>Friends Requests</h3>
-        {% if not profile.friend_requests.all %}
-        No pending friend requests.
-        {% endif %}
-        <!-- Pending Friend Requests -->
-        {% if profile.friend_requests.all %}
-            <ul>
-              <span>Pending Friend Requests</span>
+
+        <div class="list-group list-group-horizontal" id="myList" role="tablist">
+          <a class="list-group-item list-group-item-action active" data-toggle="list" href="#friend_requests"
+             role="tab">Friend Requests</a>
+          <a class="list-group-item list-group-item-action" data-toggle="list" href="#friends" role="tab">Friends</a>
+          <!-- <a class="list-group-item list-group-item-action" data-toggle="list" href="#messages" role="tab">Messages</a>
+          <a class="list-group-item list-group-item-action" data-toggle="list" href="#settings" role="tab">Settings</a> -->
+        </div>
+
+      {% endif %}
+
+      <!-- Tab panes -->
+      <div class="tab-content">
+
+        <div class="tab-pane fade show active" id="friend_requests" role="tabpanel">
+
+          <!-- Display Friend Features -->
+          {% if profile.id == request.user.id %}
+            <br/><h3>Friends Requests</h3>
+            {% if not profile.friend_requests.all %}
+              No pending friend requests.
+            {% endif %}
+            <!-- Pending Friend Requests -->
+            {% if profile.friend_requests.all %}
               <ul>
-                <table class="table">
-                  <thead class="thead-dark">
+                <span>Pending Friend Requests</span>
+                <ul>
+                  <table class="table">
+                    <thead class="thead-dark">
                     <tr>
                       <th scope="col">Username</th>
                       <th scope="col">Name</th>
                       <th scope="col">Status</th>
                     </tr>
-                  </thead>
-                  <tbody>
+                    </thead>
+                    <tbody>
 
-                {% for friend_request in profile.friend_requests.all %}
+                    {% for friend_request in profile.friend_requests.all %}
 
-                    <tr>
-                      <td><a href="{% url 'profile' friend_request.user.username %}" class="friend">
-                        {{ friend_request.user.username }}
-                      </a></td>
-                      <td>{{ friend_request.user.first_name }} {{ friend_request.user.last_name }}</td>
-                      <td>
-                        <a href="{% url 'respond-to-friend-request' friend_request.user.username  'accept'%}">
-                          <button class="btn btn-primary">Accept</button>
-                        </a>
-                        <a href="{% url 'respond-to-friend-request' friend_request.user.username 'decline' %}">
-                          <button class="btn btn-primary">Decline</button>
-                        </a>
+                      <tr>
+                        <td><a href="{% url 'profile' friend_request.user.username %}" class="friend">
+                          {{ friend_request.user.username }}
+                        </a></td>
+                        <td>{{ friend_request.user.first_name }} {{ friend_request.user.last_name }}</td>
+                        <td>
+                          <a href="{% url 'respond-to-friend-request' friend_request.user.username  'accept' %}">
+                            <button class="btn btn-primary">Accept</button>
+                          </a>
+                          <a href="{% url 'respond-to-friend-request' friend_request.user.username 'decline' %}">
+                            <button class="btn btn-primary">Decline</button>
+                          </a>
 
-                      </td>
-                    </tr>
-                  <!-- <li><a href="{% url 'profile' friend_request.user.username %}" class="friend">
+                        </td>
+                      </tr>
+                      <!-- <li><a href="{% url 'profile' friend_request.user.username %}" class="friend">
                     {{ friend_request.user.username }}
                   </a></li> -->
-                  {% empty %}
-                  <div> No pending friend requests</div>
-                {% endfor %}
-              </tbody>
-            </table>
+                    {% empty %}
+                      <div> No pending friend requests</div>
+                    {% endfor %}
+                    </tbody>
+                  </table>
+                </ul>
               </ul>
-            </ul>
-        {% endif %}
+            {% endif %}
+            </div>
+
+
+            <!-- Friends -->
+            <div class="tab-pane fade" id="friends" role="tabpanel">
+              <ul>
+                <br/>
+                <h3>Friends</h3>
+                <ul>
+                  {% for friend in profile.friends.all %}
+                    <li><a href="{% url 'profile' friend.user.username %}" class="friend">
+                      {{ friend.user.username }}
+                    </a></li>
+                  {% empty %}
+                    <li>No friends yet</li>
+                  {% endfor %}
+                </ul>
+              </ul>
+            </div>
+
+          {% endif %}
+
       </div>
-
-
-        <!-- Friends -->
-        <div class="tab-pane fade" id = "friends" role="tabpanel">
-          <ul>
-            <br/><h3>Friends</h3>
-            <ul>
-              {% for friend in profile.friends.all %}
-                <li><a href="{% url 'profile' friend.user.username %}" class="friend">
-                  {{ friend.user.username }}
-                </a></li>
-              {% empty %}
-                <li>No friends yet</li>
-              {% endfor %}
-            </ul>
-          </ul>
-        </div>
-
-      {% endif %}
-
-    </div>
 
 
       <!-- Container -->

@@ -5,7 +5,6 @@ from .transactions import (
     CashActions,
     EquityInfo,
     FinancialActionType,
-    FinancialItem,
     HistoricalEquity,
     PortfolioItem,
     PortfolioReturn,
@@ -19,7 +18,6 @@ __all__ = [
     "HistoricalEquity",
     "EquityInfo",
     "PortfolioReturn",
-    "FinancialItem",
     "FinancialActionType",
     "CashActions",
 ]
