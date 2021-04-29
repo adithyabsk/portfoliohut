@@ -208,6 +208,17 @@ class PortfolioItem(models.Model):
         blank=False,
     )  # always greater than zero
 
+    def viewable_type(self):
+        if self.type == FinancialActionType.EXTERNAL_CASH:
+            if self.quantity > 0:
+                return "DEPOSIT"
+            return "WITHDRAW"
+        elif self.type == FinancialActionType.EQUITY:
+            if self.quantity > 0:
+                return "BUY"
+            return "SELL"
+        return ""
+
     def total_value(self):
         return self.quantity * self.price
 

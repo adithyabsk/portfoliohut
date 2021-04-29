@@ -4,69 +4,28 @@
   <link rel="stylesheet" href="{% static 'portfoliohut/css/remove-asterisk.css' %}">
   <title>{{ page_name }}</title>
 {% endblock head %}
+{% load render_table from django_tables2 %}
 
 {% block content %}
   <!-- Page Title -->
   <div class="row">
     <h1 class="text-center" id="id_page_name">{{ page_name }}</h1>
   </div>
-
+  <!-- Friend's Comp Redirection -->
   {% if profiles is None and page_name == "Friends Competition" %}
     <div class="row mt-5">
       <h3 class="text-center">Make some friends! You can find some amazing traders
         <a href="{% url 'global-competition' %}">here</a>.
       </h3>
     </div>
-
   {% endif %}
-
+  <!-- Graph -->
   {% if graph %}
     {{ graph|safe }}
   {% endif %}
-
-  <!-- Leaderboard -->
-  <div class="row m-3 d-flex justify-content-center">
-    <table class="table table-hover">
-      <!-- Heading -->
-      {% if not profiles is None or profile_page == "Friends Competition" %}
-        <thead>
-        <tr>
-          <th>Rank</th>
-          <th>Username</th>
-          <th>Percent Returns</th>
-        </tr>
-        </thead>
-
-        <tbody>
-        <!-- Ranking Users -->
-        {% for profile in profiles %}
-          <tr>
-            <th scope="row">{{ forloop.counter }}</th>
-            <td>
-              <a href="{% url 'profile' profile.user.username %}">
-                {{ profile.user.username }}
-              </a>
-            </td>
-            <td>{% firstof profile.returns|floatformat:-2 "No Return " %}%</td>
-          </tr>
-        {% endfor %}
-
-        <!-- Show returns for logged in user if user is PUBLIC and NOT on a RANKING user -->
-        {% if request.user.profile.profile_type == 'public' %}
-          {% if not request.user.profile in profiles %}
-            <tr>
-              <th scope="row">{{ logged_in_user_rank }}</th>
-              <td>
-                <a href="{% url 'profile' request.user.username %}">
-                  {{ request.user.username }}
-                </a>
-              </td>
-              <td>{% firstof logged_in_user_returns|floatformat:-2 "No Return " %}%</td>
-            </tr>
-          {% endif %}
-        {% endif %}
-        </tbody>
-        </table>
-      {% endif %}
+  <!-- Competition Table -->
+  {% if competition_table %}
+    {% render_table competition_table %}
+  {% endif %}
   </div>
 {% endblock content %}

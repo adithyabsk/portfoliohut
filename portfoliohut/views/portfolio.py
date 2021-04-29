@@ -5,6 +5,8 @@ from portfoliohut.graph import _get_sp_index, combine_index_user, multi_plot
 from portfoliohut.models import Profile
 from portfoliohut.tables import PortfolioItemTable
 
+NUM_TRANSACTIONS = 5
+
 
 @login_required
 def portfolio(request):
@@ -17,6 +19,9 @@ def portfolio(request):
 
         # Get current portfolio
         current_portfolio_table = PortfolioItemTable(profile.portfolioitem_set.all())
+        current_portfolio_table.paginate(
+            page=request.GET.get("page", 1), per_page=NUM_TRANSACTIONS
+        )
 
         # Build graph
         graph_data = profile.get_cumulative_returns()
