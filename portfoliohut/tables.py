@@ -21,6 +21,7 @@ class PortfolioItemTable(tables.Table):
         model = PortfolioItem
         exclude = ("id", "profile", "type")
         sequence = ("action", "ticker", "created", "quantity", "price", "total_value")
+        orderable = False
 
 
 class ReturnsTable(tables.Table):
@@ -33,6 +34,7 @@ class ReturnsTable(tables.Table):
         model = Profile
         exclude = ("id", "bio", "profile_type")
         sequence = ("rank", "user", "percent_returns")
+        orderable = False
 
     # Add row counter to django_tables2
     # https://stackoverflow.com/questions/37694971/how-to-add-counter-column-in-django-tables2
