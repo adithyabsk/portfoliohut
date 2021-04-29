@@ -11,9 +11,21 @@ class ProfileForm(forms.ModelForm):
             "profile_type",
         }
         widgets = {
-            "bio": forms.Textarea(attrs={"rows": 2}),
+            "bio": forms.Textarea(
+                attrs={
+                    "rows": 2,
+                    "cols": 2,
+                    "style": "line-height: 1.5; border-radius: 5px;border: 1px solid #ccc;box-shadow: 1px 1px 1px #999; height: 15%;",
+                }
+            ),
+            "profile_type": forms.Select(
+                attrs={
+                    "class": "narrow-select",
+                    "style": "width:15%; line-height: 1.5; border-radius: 5px;border: 1px solid #ccc;box-shadow: 1px 1px 1px #999;",
+                }
+            ),
         }
-        labels = {"bio": "", "profile_type": "Percent Returns"}
+        labels = {"bio": "", "profile_type": "Profile Visibility:"}
 
     field_order = ["bio", "profile_type"]
 
