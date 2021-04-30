@@ -1,6 +1,7 @@
 """Social URLs"""
-
+from django.contrib.staticfiles.storage import staticfiles_storage
 from django.urls import path
+from django.views.generic import RedirectView
 
 from portfoliohut.views import (
     friend,
@@ -19,6 +20,10 @@ from portfoliohut.views import (
 
 urlpatterns = [
     path("", landing_page, name="landing-page"),
+    path(
+        "favicon.ico",
+        RedirectView.as_view(url=staticfiles_storage.url("favicon.ico")),
+    ),
     path("login", login_action, name="login"),
     path("logout", logout_action, name="logout"),
     path("register", register_action, name="register"),
