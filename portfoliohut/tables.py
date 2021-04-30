@@ -72,12 +72,12 @@ class TransactionTable(tables.Table):
     """
 
     action = Column(accessor="quantity_annotator", verbose_name="Action")
-    viewable_quantity = Column(accessor="viewable_quantity", verbose_name="Quantity")
+    # viewable_quantity = Column(accessor="viewable_quantity", verbose_name="Quantity")
 
     class Meta:
         model = Transaction
-        sequence = ("action", "ticker", "date_time", "viewable_quantity", "price")
-        exclude = ("type", "profile", "id", "time", "quantity")
+        sequence = ("action", "ticker", "date_time", "quantity", "price")
+        exclude = ("type", "profile", "id", "time")
         attrs = {"width": "100%"}
         orderable = False
 
