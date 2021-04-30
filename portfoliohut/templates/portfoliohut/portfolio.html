@@ -1,29 +1,29 @@
 {% extends 'portfoliohut/base.html' %}
+{% load static %}
 {% block head %}
-  <title>Portfolio</title>
+<link rel="stylesheet" href="{% static 'portfoliohut/css/spinner.css' %}">
+<title>Portfolio</title>
 {% endblock head %}
 {% load render_table from django_tables2 %}
 
 {% block content %}
-  <div class="container">
+  <!-- Page Title -->
+  <h1 class="text-center mt-4">Portfolio</h1>
 
-    <!-- Page Title -->
-    <h1 class="text-center mt-4">Portfolio</h1>
+  <!-- Graph -->
+  <div class="row justify-content-center mt-2">
+    {% if graph %}
+      {{ graph|safe }}
+    {% endif %}
+  </div>
 
-    <!-- Graph -->
-    <div class="row justify-content-center mt-2">
-      {% if graph %}
-        {{ graph|safe }}
-      {% endif %}
-    </div>
+  <div class="list-group list-group-horizontal" id="myList" role="tablist">
+    <a class="list-group-item list-group-item-action active" data-toggle="list" href="#profile" role="tab">Transaction History</a>
+    <a class="list-group-item list-group-item-action" data-toggle="list" href="#home" role="tab">Current Portfolio Summary</a>
+  </div>
 
-    <div class="list-group list-group-horizontal" id="myList" role="tablist">
-      <a class="list-group-item list-group-item-action active" data-toggle="list" href="#profile" role="tab">Transaction History</a>
-      <a class="list-group-item list-group-item-action" data-toggle="list" href="#home" role="tab">Current Portfolio Summary</a>
-    </div>
-
-<!-- Tab panes -->
-<div class="tab-content">
+  <!-- Tab panes -->
+  <div class="tab-content">
     <div class="tab-pane" id="home" role="tabpanel">
       <hr/>
       <h4 class="text-center mt-2 mb-2 ">Current Portfolio Summary</h4>
@@ -38,7 +38,7 @@
       <h4 class="text-center mt-2 mb-2">Transaction History</h4>
       <hr/>
       {% render_table current_transactions_table %}
-  </div>
+    </div>
 
     {#    <!-- Summary Statistics -->#}
     {#    <h5>Portfolio Value: {{ total }}</h5>#}
@@ -47,5 +47,4 @@
     {#    <br>#}
     <br/>
 
-  </div>
   {% endblock content %}

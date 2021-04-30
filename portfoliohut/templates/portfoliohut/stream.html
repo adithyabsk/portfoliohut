@@ -1,12 +1,18 @@
 {% extends 'portfoliohut/base.html' %}
 {% load static %}
 {% block head %}
-  <link rel="stylesheet" href="{% static 'portfoliohut/css/remove-asterisk.css' %}">
   <title>{{ page_name }}</title>
 {% endblock head %}
 {% load render_table from django_tables2 %}
 
 {% block content %}
+  <!-- <script>
+    window.onload = function() {
+      let row = document.querySelectorAll('[data-username="{{request.user.username}}"]')[0];
+      row.classList.add("bg-light");
+    };
+  </script> -->
+
   <!-- Page Title -->
   <h1 class="text-center" id="id_page_name">{{ page_name }}</h1>
 
@@ -26,12 +32,4 @@
   {% if competition_table %}
     {% render_table competition_table %}
   {% endif %}
-
-  <script>
-		// Save Django variables so JS file can access them
-    window.onload = function() {
-      let row = document.querySelectorAll('[data-username="{{request.user.username}}"]')[0];
-      row.classList.add("bg-light");
-    };
-	</script>
 {% endblock content %}
