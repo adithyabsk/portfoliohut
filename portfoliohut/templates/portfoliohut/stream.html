@@ -26,4 +26,12 @@
   {% if competition_table %}
     {% render_table competition_table %}
   {% endif %}
+
+  <script>
+		// Save Django variables so JS file can access them
+    window.onload = function() {
+      let row = document.querySelectorAll('[data-username="{{request.user.username}}"]')[0];
+      row.classList.add("bg-light");
+    };
+	</script>
 {% endblock content %}
