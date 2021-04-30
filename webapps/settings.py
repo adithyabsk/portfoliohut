@@ -12,6 +12,7 @@ https://docs.djangoproject.com/en/3.1/ref/settings/
 
 from pathlib import Path
 
+import django_heroku
 from django.contrib import messages
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
@@ -81,9 +82,18 @@ WSGI_APPLICATION = "webapps.wsgi.application"
 # https://docs.djangoproject.com/en/3.1/ref/settings/#databases
 
 DATABASES = {
+    # If we need to switch back to sqlite3 for testing
+    # "default": {
+    #     "ENGINE": "django.db.backends.sqlite3",
+    #     "NAME": BASE_DIR / "db.sqlite3",
+    # }
     "default": {
-        "ENGINE": "django.db.backends.sqlite3",
-        "NAME": BASE_DIR / "db.sqlite3",
+        "ENGINE": "django.db.backends.postgresql_psycopg2",
+        "NAME": "portfoliohut",
+        "USER": "portfoliohut",
+        "PASSWORD": "portfoliohut",
+        "HOST": "localhost",
+        "PORT": "",
     }
 }
 
@@ -139,3 +149,6 @@ MESSAGE_TAGS = {
     messages.WARNING: "alert-warning",
     messages.ERROR: "alert-danger",
 }
+
+# Activate Django-Heroku.
+django_heroku.settings(locals())
