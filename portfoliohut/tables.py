@@ -12,12 +12,12 @@ from portfoliohut.models import PortfolioItem, Profile, Transaction
 
 class PortfolioItemTable(tables.Table):
     total_value = Column(accessor=A("total_value"))
-    action = Column(accessor=A("viewable_type"))
+    # action = Column(accessor=A("viewable_type"))
 
     class Meta:
         model = PortfolioItem
-        exclude = ("id", "profile", "type")
-        sequence = ("action", "ticker", "created", "quantity", "price", "total_value")
+        exclude = ("id", "profile")
+        sequence = ("type", "ticker", "created", "quantity", "price", "total_value")
         orderable = False
 
     def render_total_value(self, value):
@@ -28,7 +28,7 @@ class PortfolioItemTable(tables.Table):
 
 
 class ReturnsTable(tables.Table):
-    rank = tables.Column(empty_values=())
+    rank = Column(empty_values=())
     percent_returns = Column(accessor=A("get_most_recent_return"))
 
     class Meta:
@@ -71,20 +71,18 @@ class TransactionTable(tables.Table):
     Has in built pagination feature as well.
     """
 
-    action = tables.Column(accessor="quantity_annotator", verbose_name="Action")
+    action = Column(accessor="quantity_annotator", verbose_name="Action")
+    viewable_quantity = Column(accessor="viewable_quantity", verbose_name="Quantity")
 
     class Meta:
         model = Transaction
-        sequence = (
-            "type",
-            "ticker",
-            "date_time",
-            "price",
-        )
-        exclude = (
-            "profile",
-            "id",
-            "time",
-            "quantity",
-        )
+        sequence = ("action", "ticker", "date_time", "viewable_quantity", "price")
+        exclude = ("type", "profile", "id", "time", "quantity")
         attrs = {"width": "100%"}
+        orderable = False
+
+    def render_total_value(self, value):
+        return "${:,}".format(value)
+
+    def render_price(self, value):
+        return "${:,}".format(value)

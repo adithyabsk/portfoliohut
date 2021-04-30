@@ -175,10 +175,18 @@ class Transaction(models.Model):
         return items
 
     def quantity_annotator(self):
-        if self.quantity < 0:
-            return "Sell"
-        else:
-            return "Buy"
+        if self.type == FinancialActionType.EXTERNAL_CASH:
+            if self.quantity > 0:
+                return "DEPOSIT"
+            return "WITHDRAW"
+        elif self.type == FinancialActionType.EQUITY:
+            if self.quantity > 0:
+                return "BUY"
+            return "SELL"
+        return ""
+
+    def viewable_quantity(self):
+        return abs(self.quantity)
 
     def __str__(self):
         return ", ".join(self.display_items())

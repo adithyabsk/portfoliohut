@@ -22,7 +22,9 @@ def portfolio(request):
         current_transactions_table = TransactionTable(
             profile.transaction_set.filter(
                 type__in=[FinancialActionType.EXTERNAL_CASH, FinancialActionType.EQUITY]
-            ).all()
+            )
+            .all()
+            .order_by("-date_time")
         )
         current_transactions_table.paginate(
             page=request.GET.get("page", 1), per_page=NUM_TRANSACTIONS
