@@ -5,6 +5,7 @@ django-tables2==2.3.4
 django-stubs==1.7.0
 gunicorn==20.1.0
 django-heroku==0.3.1
+python-dotenv==0.17.1
 
 numpy==1.20.2
 pandas==1.2.3
