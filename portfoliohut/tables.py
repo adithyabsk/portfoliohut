@@ -16,8 +16,8 @@ class PortfolioItemTable(tables.Table):
 
     class Meta:
         model = PortfolioItem
-        exclude = ("id", "profile")
-        sequence = ("type", "ticker", "created", "quantity", "price", "total_value")
+        exclude = ("id", "profile", "created")
+        sequence = ("type", "ticker", "quantity", "price", "total_value")
         orderable = False
 
     def render_total_value(self, value):
