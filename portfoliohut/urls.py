@@ -3,7 +3,8 @@
 from django.urls import path
 
 from portfoliohut.views import (
-    display_table,
+    display_friends_table,
+    display_global_table,
     friend,
     friends_competition,
     friends_returns_graph,
@@ -41,7 +42,8 @@ urlpatterns = [
         name="respond-to-friend-request",
     ),
     path("landing-page", landing_page, name="landing-page"),
-    path("display-table", display_table, name="display-table"),
+    path("display-friends-table", display_friends_table, name="display-friends-table"),
+    path("display-global-table", display_global_table, name="display-global-table"),
     path("profile-returns/<str:username>", profile_returns, name="profile-returns"),
     path("returns-graph", returns_graph, name="returns-graph"),
     path("friends-returns-graph", friends_returns_graph, name="friends-returns-graph"),

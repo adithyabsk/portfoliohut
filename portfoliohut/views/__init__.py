@@ -2,7 +2,8 @@
 
 from .account_management import login_action, logout_action, register_action
 from .base import (
-    display_table,
+    display_friends_table,
+    display_global_table,
     friends_competition,
     friends_returns_graph,
     global_competition,
@@ -31,7 +32,8 @@ __all__ = [
     "transaction_input",
     "profile",
     "portfolio",
-    "display_table",
+    "display_friends_table",
+    "display_global_table",
     "profile_returns",
     "returns_graph",
     "friends_returns_graph",

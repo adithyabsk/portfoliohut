@@ -26,23 +26,30 @@
       <span class="sr-only">Loading...</span>
     </div>
 
-    <!-- Graph -->
     {% if page_name == "Friends Competition" %}
+      <!-- Graph -->
       <div class="container invisible" role="status" id="content">
         <div id="returns-graph-id"></div>
       </div>
-    {% endif %}
 
-    <!-- Competition Table -->
-    <div class="container invisible" role="status" id="table">
-      {% ajax_table "competition_table_id" "display-table" %}
-    </div>
+      <!-- Friends Competition Table -->
+      <div class="container invisible" role="status" id="table">
+        {% ajax_table "competition_table_id" "display-friends-table" %}
+      </div>
+    {% else %}
+
+      <!-- Global Competition Table-->
+      <div class="container invisible" role="status" id="table">
+        {% ajax_table "competition_table_id" "display-global-table" %}
+      </div>
+    {% endif %}
 
     {% if page_name == "Friends Competition" %}
       <script>
           displayPortfolioGraph('', "{% url 'friends-returns-graph' %}");
       </script>
     {% endif %}
+
   {% endif %}
 
 
