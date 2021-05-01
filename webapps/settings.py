@@ -9,10 +9,14 @@ https://docs.djangoproject.com/en/3.1/topics/settings/
 For the full list of settings and their values, see
 https://docs.djangoproject.com/en/3.1/ref/settings/
 """
-
+import os
 from pathlib import Path
 
+import django_heroku
 from django.contrib import messages
+from dotenv import load_dotenv
+
+load_dotenv()
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 
@@ -26,7 +30,8 @@ BASE_DIR = Path(__file__).resolve().parent.parent
 SECRET_KEY = "juf*&c=%9t7%@c6gh4f@k3m5)1n0&h2(6u&z-d!+k72&t9gw7@"
 
 # SECURITY WARNING: don't run with debug turned on in production!
-DEBUG = True
+
+DEBUG = os.environ.get("DEBUG", False)
 
 ALLOWED_HOSTS = []
 
@@ -82,9 +87,18 @@ WSGI_APPLICATION = "webapps.wsgi.application"
 # https://docs.djangoproject.com/en/3.1/ref/settings/#databases
 
 DATABASES = {
+    # If we need to switch back to sqlite3 for testing
+    # "default": {
+    #     "ENGINE": "django.db.backends.sqlite3",
+    #     "NAME": BASE_DIR / "db.sqlite3",
+    # }
     "default": {
-        "ENGINE": "django.db.backends.sqlite3",
-        "NAME": BASE_DIR / "db.sqlite3",
+        "ENGINE": "django.db.backends.postgresql_psycopg2",
+        "NAME": "portfoliohut",
+        "USER": "portfoliohut",
+        "PASSWORD": "portfoliohut",
+        "HOST": "localhost",
+        "PORT": "",
     }
 }
 
@@ -128,6 +142,7 @@ USE_TZ = True
 # https://docs.djangoproject.com/en/3.1/howto/static-files/
 
 STATIC_URL = "/static/"
+STATIC_ROOT = os.path.join(BASE_DIR, "staticfiles")
 
 # Setup Django tables 2
 DJANGO_TABLES2_TEMPLATE = "django_tables2/bootstrap4.html"
@@ -140,3 +155,6 @@ MESSAGE_TAGS = {
     messages.WARNING: "alert-warning",
     messages.ERROR: "alert-danger",
 }
+
+# Activate Django-Heroku.
+django_heroku.settings(locals())

@@ -321,7 +321,7 @@ class HistoricalEquity(models.Model):
     high = models.DecimalField(max_digits=100, decimal_places=2, blank=False)
     low = models.DecimalField(max_digits=100, decimal_places=2, blank=False)
     close = models.DecimalField(max_digits=100, decimal_places=2, blank=False)
-    volume = models.IntegerField()
+    volume = models.PositiveBigIntegerField()
     dividends = models.DecimalField(max_digits=100, decimal_places=2)
     stock_splits = models.IntegerField()
 

@@ -19,6 +19,7 @@ $ source ./venv/bin/activate
 (venv) $ pip install -r requirements.txt
 (venv) $ pip install -r requirements-dev.txt
 (venv) $ pre-commit install # runs before each commit you make
+(venv) $ cp env.sample .env # Update these values if necessary
 ```
 
 Provision database
@@ -38,4 +39,12 @@ commit.
 
 ```shell
 (venv) $ pre-commit run -a
+```
+
+Note: If you are running in `DEBUG=False` mode, you will need to run the
+following commands. You will need to re-run this command each time you modify a
+template file.
+
+```shell
+(venv) $ python manage.py collectstatic
 ```

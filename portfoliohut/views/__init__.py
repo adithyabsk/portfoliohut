@@ -8,6 +8,7 @@ from .base import (
     friends_returns_graph,
     global_competition,
     landing_page,
+    page_not_found,
 )
 from .portfolio import portfolio, returns_graph
 from .profile import (
@@ -27,6 +28,7 @@ __all__ = [
     "login_action",
     "logged_in_user_profile",
     "logout_action",
+    "page_not_found",
     "register_action",
     "respond_to_friend_request",
     "transaction_input",

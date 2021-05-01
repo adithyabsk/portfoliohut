@@ -1,4 +1,5 @@
 from django import forms
+from django.utils.safestring import mark_safe
 
 from portfoliohut.models import Profile
 
@@ -13,19 +14,19 @@ class ProfileForm(forms.ModelForm):
         widgets = {
             "bio": forms.Textarea(
                 attrs={
-                    "rows": 2,
-                    "cols": 2,
+                    "rows": 3,
+                    "cols": 100,
                     "style": "line-height: 1.5; border-radius: 5px;border: 1px solid #ccc;box-shadow: 1px 1px 1px #999; height: 15%;",
                 }
             ),
             "profile_type": forms.Select(
                 attrs={
                     "class": "narrow-select",
-                    "style": "width:15%; line-height: 1.5; border-radius: 5px;border: 1px solid #ccc;box-shadow: 1px 1px 1px #999;",
                 }
             ),
         }
-        labels = {"bio": "", "profile_type": "Profile Visibility:"}
+        labels = {"bio": "", "profile_type": "Profile Visibility"}
+
 
     field_order = ["bio", "profile_type"]
 
