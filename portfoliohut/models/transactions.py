@@ -185,9 +185,6 @@ class Transaction(models.Model):
             return "SELL"
         return ""
 
-    def viewable_quantity(self):
-        return abs(self.quantity)
-
     def __str__(self):
         return ", ".join(self.display_items())
 

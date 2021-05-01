@@ -24,8 +24,8 @@ class PortfolioItemTable(tables.Table):
 
 
 class ReturnsTable(tables.Table):
-    rank = Column("rank")
-    returns = Column("returns")
+    rank = Column("Rank")
+    returns = Column("Returns")
 
     class Meta:
         model = Profile
