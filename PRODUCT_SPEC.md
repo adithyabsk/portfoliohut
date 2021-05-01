@@ -12,7 +12,7 @@ action, to better understand how it works.
 * Sign up button
 * Product Copy to tell users what the product is
     * Images / Video of Product in Action
-* Navbar with the pages (but they are hidden)
+* Navbar with the pages (but they are disabled)
 
 ### Login
 
@@ -23,7 +23,6 @@ the site and redirected to the global competition page.
 
 * Username
 * Password
-* Password reset (nice to have, separate page)
 
 ### Register
 
@@ -36,7 +35,6 @@ sure that they are valid.
 * First Name
 * Last Name
 * Email
-    * Email verification (nice to have)
 * Username
 * Password
 
@@ -100,7 +98,6 @@ all-time) for the global competition.
     * Rank
     * Username
     * Return %
-    * Change over the last week (nice to have)
     * Button to view profile
 * Selector for time range
     * Month, Year, All-time
@@ -147,8 +144,6 @@ week, month, and All-time.
   page, redirecting them to the ‘Add Trades’ page.
 * Chart showing returns over time compared to benchmark
     * Hardcoded SPY
-    * A selectable benchmark (nice to have)
-* Other portfolio metrics (nice to have)
 * Current Positions
     * Picker to switch to trading history
 * Button to add trade by manual input or CSV upload
@@ -200,9 +195,9 @@ using the same approach as defined above) each entry as itemized above.
 
 ## Django Models
 
-![Django Models](./mockups/NewModels.png)
+![Django Models](./mockups/myapp_models.png)
 
-* [Django Models](https://github.com/cmu-webapps/s21_team_11/blob/main/portfoliohut/models.py)
+* [Django Models](https://github.com/cmu-webapps/s21_team_11/blob/main/portfoliohut/models/)
 
 ## Page Mockups
 
