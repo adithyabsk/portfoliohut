@@ -58,27 +58,7 @@
     <br/>
 
     <script>
-      function remove_spinner() {
-          $(".spinner-border").remove()
-          let content = document.getElementById('content');
-          content.classList.remove("invisible")
-      }
-
-      function update_profile_returns(querystring = '', url = "{% url 'returns-graph' %}") {
-          var xhr = new XMLHttpRequest();
-          xhr.onreadystatechange = function() {
-              if (xhr.readyState == XMLHttpRequest.DONE ) {
-                  if (xhr.status == 200) {
-                      Plotly.newPlot("returns-graph-id", JSON.parse(xhr.responseText));
-                  }
-                  remove_spinner()
-              }
-          };
-          xhr.open('GET', url + querystring, true);
-          xhr.send();
-      }
-
-      update_profile_returns('', "{% url 'returns-graph' %}");
+      displayPortfolioGraph('', "{% url 'returns-graph' %}");
     </script>
 
   {% endblock content %}
