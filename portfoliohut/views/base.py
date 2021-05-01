@@ -86,7 +86,7 @@ def friends_returns_graph(request):
     friends_series = []
     friends_names = []
     for profile in unsorted_friends_profiles:
-        friend_returns = profile.get_cumulative_returns()
+        friend_returns = profile.get_cumulative_returns() * 100
         friends_series.append(friend_returns)
         friends_names.append(profile.user.first_name + " " + profile.user.last_name)
     user_returns = my_profile.get_cumulative_returns() * 100

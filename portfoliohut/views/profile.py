@@ -22,7 +22,7 @@ def profile_returns(request, username):
     if not user.exists():
         return HttpResponse("")
     user = user[0]
-    returns = user.profile.get_most_recent_return()
+    returns = user.profile.get_most_recent_return() * 100
     if math.isnan(returns):
         return HttpResponse("<h5 class='font-weight-bold mb-0 d-block'>No Return %<h5>")
     return HttpResponse(

@@ -34,7 +34,7 @@ def portfolio(request):
         profile = get_object_or_404(Profile, user=request.user)
 
         has_returns = True
-        returns = profile.get_most_recent_return()
+        returns = profile.get_most_recent_return() * 100
         if math.isnan(returns):
             has_returns = False
 
