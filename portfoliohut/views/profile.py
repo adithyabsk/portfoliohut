@@ -27,7 +27,7 @@ def profile_returns(request, username):
         return HttpResponse("<h5 class='font-weight-bold mb-0 d-block'>No Return %<h5>")
     return HttpResponse(
         "<h5 class='font-weight-bold mb-0 d-block'>{returns}%<h5>".format(
-            returns=returns,
+            returns=round(returns, 3),
         )
     )
 
