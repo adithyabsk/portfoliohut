@@ -18,7 +18,9 @@ def _build_competition_table(profiles, page):
 
 def _annotate_profiles_with_returns(profiles, current_profile):
     [
-        setattr(profile, "returns", profile.get_most_recent_return())  # noqa: B010
+        setattr(  # noqa: B010
+            profile, "returns", profile.get_most_recent_return() * 100
+        )  # noqa: B010
         for profile in profiles
     ]
     current_profile_rank = None
@@ -80,14 +82,14 @@ def friends_competition(request):
         friends_series = []
         friends_names = []
         for profile in unsorted_friends_profiles:
-            profile.returns = profile.get_most_recent_return()
+            profile.returns = profile.get_most_recent_return() * 100
             annotated_profiles.append(profile)
-            friend_returns = profile.get_cumulative_returns()
+            friend_returns = profile.get_cumulative_returns().to_series()
             friends_series.append(friend_returns)
             friends_names.append(profile.user.first_name + " " + profile.user.last_name)
 
         # Sort friends by their percent returns
-        my_profile.returns = my_profile.get_most_recent_return()
+        my_profile.returns = my_profile.get_most_recent_return() * 100
         annotated_profiles.append(my_profile)
         profiles = sorted(
             annotated_profiles, key=lambda prof: prof.returns, reverse=True
@@ -100,7 +102,7 @@ def friends_competition(request):
         context["competition_table"] = _build_competition_table(profiles, page)
 
         # Create the competition graph
-        user_returns = my_profile.get_cumulative_returns()
+        user_returns = my_profile.get_cumulative_returns().to_series() * 100
         index_returns = _get_sp_index(user_returns.index[0])
         merged_df = combine_data(
             friends_series, friends_names, user_returns, index_returns

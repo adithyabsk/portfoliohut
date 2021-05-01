@@ -43,6 +43,7 @@ def profile(request, username):
             stocks_urls.append((EquityInfo.objects.get_ticker(i["ticker"])).logo_url)
 
     context["top_stocks"] = stocks_urls
+    context["returns"] = profile.get_most_recent_return() * 100
     # Handle GET request
     if request.method == "GET":
         if profile.user == request.user:

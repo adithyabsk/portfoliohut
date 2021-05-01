@@ -52,8 +52,19 @@ class BaseTransactionForm(forms.ModelForm):
 
     def clean_date_time(self):
         date_time = self.cleaned_data.get("date_time")
+        date = date_time.date()
         if date_time > timezone.now():
             raise forms.ValidationError("Invalid date: Date cannot be in the future")
+
+        # Validate time: NYSE must be open at the given time of transaction
+        nyse = mcal.get_calendar("NYSE")
+        # The times are in UTC by default but incoming times are in ET
+        day_df = nyse.schedule(start_date=date, end_date=date)
+        if date not in day_df.index.date:
+            raise forms.ValidationError(
+                "Invalid date: Market must be open for all financial transactions."
+            )
+
         return date_time
 
     def clean_price(self):
@@ -104,13 +115,13 @@ class StockForm(BaseTransactionForm):
         if not ticker_qset.exists():
             raise forms.ValidationError("Invalid ticker: Ticker must be in the NYSE")
 
-        # Validate date: NYSE must be open on the given day and the date cannot be in the future
+        # Validate that the ticker exists in our historical cache
         date_time = cleaned_data.get("date_time")
         date = date_time.date()
         ticker_date_qset = ticker_qset.filter(date=date_time.date())
         if not ticker_date_qset.exists():
             raise forms.ValidationError(
-                "Invalid date: Could not find the ticker on the given date or the date is in the future"
+                "Invalid date: Could not find the ticker on the given date"
             )
 
         # Validate time: NYSE must be open at the given time of transaction
@@ -181,9 +192,12 @@ class StockForm(BaseTransactionForm):
             )
         return quantity
 
-    def save(self, *, skip_portfolio_reset=False):
+    def save(self, *, skip_post_add_steps=False):
         Transaction.objects.create_equity_transaction(
-            profile=self.profile, type=FinancialActionType.EQUITY, **self.cleaned_data
+            only_create=skip_post_add_steps,
+            profile=self.profile,
+            type=FinancialActionType.EQUITY,
+            **self.cleaned_data,
         )
 
 
@@ -244,8 +258,9 @@ class CashForm(BaseTransactionForm):
             )
         return action
 
-    def save(self, *, skip_portfolio_reset=False):
+    def save(self, *, skip_post_add_steps=False):
         Transaction.objects.create_cash_transaction(
+            only_create=skip_post_add_steps,
             profile=self.profile,
             type=FinancialActionType.EXTERNAL_CASH,
             **self.cleaned_data,
@@ -288,6 +303,6 @@ class CSVForm(forms.Form):
 
                     raise forms.ValidationError(f"Error occurred on row {idx+1}")
 
-                row_form.save(skip_portfolio_reset=True)
+                row_form.save(skip_post_add_steps=True)
 
-            Transaction.objects.reset_portfolio_cache(profile=self.profile)
+            Transaction.objects.post_add_transaction_steps(profile=self.profile)

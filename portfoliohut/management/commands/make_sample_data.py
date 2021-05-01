@@ -112,7 +112,7 @@ def create_random_user(seed: int):
         rows = [
             [
                 "deposit",
-                datetime(year=2020, month=1, day=1, hour=9, minute=30).replace(
+                datetime(year=2020, month=1, day=2, hour=9, minute=30).replace(
                     tzinfo=TZ
                 ),
                 initial_balance,

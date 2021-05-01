@@ -8,7 +8,7 @@
   <h1 id="id_page_name" class="text-center">Register</h1>
   <div class="d-flex justify-content-center align-items-center container ">
     <div class="row">
-      <form method="post" action="{% url 'login' %}">
+      <form method="post" action="{% url 'register' %}">
         {% csrf_token %}
         {% bootstrap_form register_form %}
         {% buttons %}

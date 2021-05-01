@@ -29,7 +29,7 @@ def portfolio(request):
         )
 
         # Build
-        graph_data = profile.get_cumulative_returns()
+        graph_data = profile.get_cumulative_returns().to_series() * 100
         graph = None
         if not graph_data.empty:
             start_date = graph_data.index[0]

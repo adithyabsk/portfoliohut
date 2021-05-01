@@ -4,7 +4,8 @@ from decimal import Decimal
 import pandas as pd
 from django.contrib.auth.models import User
 from django.db import models
-from django.db.models import F, QuerySet, Sum
+from django.db.models import F, QuerySet, Sum, Window
+from django.db.models.functions import Abs, Exp, Ln
 
 from .transactions import (
     CashActions,
@@ -141,16 +142,27 @@ class Profile(models.Model):
         "Profile", blank=True, related_name="friend_requests_list"
     )
 
-    def get_returns_df(self) -> pd.Series:
-        return _calc_returns(self.transaction_set)
-
-    def get_cumulative_returns(self) -> pd.Series:
-        return (1 + self.get_returns_df()).cumprod() - 1
+    # https://www.sqlservercentral.com/forums/topic/aggregate-function-product#post-1442921
+    def get_cumulative_returns(self):
+        # Original Pandas: (1 + self.get_returns_df()).cumprod() - 1
+        return (
+            self.portfolioreturn_set.values("date", "returns")
+            .annotate(
+                # Log-sum-exp trick reversed to get the cumulative product (https://en.wikipedia.org/wiki/LogSumExp)
+                # Day to day returns cannot be lower than zero when you add 1 (i.e. gains are infinite losses are capped)
+                # This is why we don't need to account for the sign here
+                cumprod=Exp(
+                    Window(Sum(Ln(Abs(F("returns") + 1))), order_by=F("date").asc())
+                )
+                - 1
+            )
+            .values("date", "cumprod")
+        )
 
     def get_most_recent_return(self) -> float:
-        returns = self.get_cumulative_returns()
-        if not returns.empty:
-            return returns.iloc[-1]
+        most_recent_return = self.get_cumulative_returns().last()
+        if most_recent_return is not None:
+            return most_recent_return["cumprod"]
         else:
             return 0
 

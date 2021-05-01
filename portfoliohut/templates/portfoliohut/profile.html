@@ -18,7 +18,7 @@
         </li>
         {% if profile.profile_type == 'public' or profile.user == request.user or profile in request.user.friends.all %}
         <li class="list-inline-item">
-            <h5 class="font-weight-bold mb-0 d-block "> {% firstof profile.get_most_recent_return|floatformat:-2 "No Return " %}%</h5>
+            <h5 class="font-weight-bold mb-0 d-block "> {% firstof {{ returns }}|floatformat:-2 "No Return " %}%</h5>
             <small class="text-muted"> <i class="fas fa-user "></i>Current Returns</small>
         </li>
         {% endif %}

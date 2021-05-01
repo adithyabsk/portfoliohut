@@ -2,6 +2,7 @@
 from django.contrib.auth import authenticate, login, logout
 from django.contrib.auth.decorators import login_required
 from django.contrib.auth.models import User
+from django.db import transaction
 from django.shortcuts import redirect, render
 from django.urls import reverse
 
@@ -39,29 +40,31 @@ def logout_action(request):
 
 
 def register_action(request):
+    if request.user.is_authenticated:
+        return redirect(reverse("global-competition"))
+
     if request.method == "GET":
         return render(
             request, "portfoliohut/register.html", {"register_form": RegisterForm()}
         )
 
-    context = {}
-
+    # Check register form
     register_form = RegisterForm(request.POST)
-    context["register_form"] = register_form
-
     if not register_form.is_valid():
-        return render(request, "portfoliohut/register.html", context)
+        return render(
+            request, "portfoliohut/register.html", {"register_form": register_form}
+        )
 
     # Create user since the form is valid
-    new_user = User.objects.create_user(
-        username=register_form.cleaned_data["username"],
-        password=register_form.cleaned_data["password"],
-        email=register_form.cleaned_data["email"],
-        first_name=register_form.cleaned_data["first_name"],
-        last_name=register_form.cleaned_data["last_name"],
-    )
-    new_user.save()
-
-    Profile(user=new_user).save()
+    with transaction.atomic():
+        new_user = User.objects.create_user(
+            username=register_form.cleaned_data["username"],
+            password=register_form.cleaned_data["password"],
+            email=register_form.cleaned_data["email"],
+            first_name=register_form.cleaned_data["first_name"],
+            last_name=register_form.cleaned_data["last_name"],
+        )
+        new_user.save()
+        Profile(user=new_user).save()
 
     return redirect(reverse("login"))
