@@ -31,7 +31,7 @@ SECRET_KEY = "juf*&c=%9t7%@c6gh4f@k3m5)1n0&h2(6u&z-d!+k72&t9gw7@"
 
 # SECURITY WARNING: don't run with debug turned on in production!
 
-DEBUG = os.environ.get("DEBUG", False)
+DEBUG = os.environ.get("DEBUG", True)
 
 ALLOWED_HOSTS = []
 
