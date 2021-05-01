@@ -160,7 +160,7 @@ class Profile(models.Model):
         )
 
     def get_most_recent_return(self) -> float:
-        most_recent_return = self.get_cumulative_returns().last()
+        most_recent_return = self.get_cumulative_returns().order_by("date").last()
         if most_recent_return is not None:
             return most_recent_return["cumprod"]
         else:
