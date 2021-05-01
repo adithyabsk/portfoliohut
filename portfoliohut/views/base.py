@@ -12,29 +12,24 @@ from portfoliohut.tables import ReturnsTable
 NUM_LEADERS = 10
 
 
-def _sort_profiles_by_percent_returns(annotated_profiles):
-    profiles = sorted(
-        annotated_profiles,
-        key=lambda prof: prof.returns
-        if not math.isnan(prof.returns)
-        else float("-inf"),
-        reverse=True,
-    )
-    return profiles
-
-
 def _build_competition_table(profiles, page, request):
     competition_table = ReturnsTable(profiles)
     RequestConfig(request).configure(competition_table)
     return HttpResponse(competition_table.as_html(request))
 
 
-def _annotate_profiles_with_returns(unsorted_profiles):
-    annotated_profiles = []
-    for profile in unsorted_profiles:
-        profile.returns = profile.get_most_recent_return()
-        annotated_profiles.append(profile)
-    return annotated_profiles
+def _annotate_profiles_with_returns(profiles, current_profile):
+    [
+        setattr(profile, "returns", profile.get_most_recent_return())  # noqa: B010
+        for profile in profiles
+    ]
+    current_profile_rank = None
+    profiles = sorted(profiles, key=lambda prof: prof.returns, reverse=True)
+    for i, profile in enumerate(profiles):
+        profile.rank = i + 1
+        if current_profile == profile:
+            current_profile_rank = i
+    return profiles, current_profile_rank
 
 
 @login_required
@@ -44,17 +39,20 @@ def display_global_table(request):
     unsorted_public_profiles = public_profiles.all()
 
     # Calculate percent returns for each public profile
-    annotated_profiles = _annotate_profiles_with_returns(unsorted_public_profiles)
+    annotated_profiles, curr_prof_rank = _annotate_profiles_with_returns(
+            unsorted_public_profiles, request.user.profile
+    )
 
-    # Sort public profiles by their percent returns
-    profiles = _sort_profiles_by_percent_returns(annotated_profiles)
+        # Create the competition table
+        page = request.GET.get("page")
+        if page is None and curr_prof_rank is not None:
+            page = math.ceil(curr_prof_rank / NUM_LEADERS)
+        else:
+            page = 1
 
-    # Identify the current user's rank
-    page_num = 1
-    if request.user.profile in profiles:
-        rank = profiles.index(request.user.profile) + 1
-        page_num = math.ceil(rank / NUM_LEADERS)
-    page = request.GET.get("page", page_num)
+        context["competition_table"] = _build_competition_table(
+            annotated_profiles, page
+        )
 
     # Create the competition table
     return _build_competition_table(profiles, page, request)
@@ -72,7 +70,7 @@ def display_friends_table(request):
     if no_friends_flag:
         return None
 
-    # Calculate percent returns for each public profile
+    # Calculate percent returns for each friend
     annotated_profiles = []
     for profile in unsorted_friends_profiles:
         profile.returns = profile.get_most_recent_return()
@@ -81,7 +79,9 @@ def display_friends_table(request):
     annotated_profiles.append(my_profile)
 
     # Sort friends by their percent returns
-    profiles = _sort_profiles_by_percent_returns(annotated_profiles)
+    profiles = sorted(
+            annotated_profiles, key=lambda prof: prof.returns, reverse=True
+        )
 
     # Create the competition table
     rank = profiles.index(my_profile) + 1

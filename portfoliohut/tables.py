@@ -1,6 +1,3 @@
-import itertools
-import math
-
 from django.shortcuts import reverse
 from django.utils.html import mark_safe
 from django_tables2 import Column, tables
@@ -10,8 +7,8 @@ from portfoliohut.models import PortfolioItem, Profile, Transaction
 
 
 class PortfolioItemTable(tables.Table):
-    total_value = Column(accessor=A("total_value"))
-    # action = Column(accessor=A("viewable_type"))
+    total_value = tables.Column(accessor=A("total_value"))
+    # action = tables.Column(accessor=A("viewable_type"))
 
     class Meta:
         model = PortfolioItem
@@ -27,28 +24,18 @@ class PortfolioItemTable(tables.Table):
 
 
 class ReturnsTable(tables.Table):
-    rank = Column(empty_values=())
-    percent_returns = Column(accessor=A("get_most_recent_return"))
+    rank = Column("rank")
+    returns = tables.Column("returns")
 
     class Meta:
         model = Profile
         exclude = ("id", "bio", "profile_type")
-        sequence = ("rank", "user", "percent_returns")
+        sequence = ("rank", "user", "returns")
         row_attrs = {"data-username": lambda record: record.user.username}
         orderable = False
 
-    # Add row counter to django_tables2
-    # https://stackoverflow.com/questions/37694971/how-to-add-counter-column-in-django-tables2
-    def render_rank(self):
-        self.row_counter = getattr(
-            self, "row_counter", itertools.count(self.page.start_index())
-        )
-        return next(self.row_counter)
-
-    def render_percent_returns(self, value):
-        if not math.isnan(value):
-            return "{:0.2f}%".format(value)
-        return "No Return %"
+    def render_returns(self, value):
+        return f"{value:0.2f}%"
 
     # Add clickable link to user's profile page
     # https://stackoverflow.com/questions/22941424/django-tables2-create-extra-column-with-links

@@ -1,12 +1,3 @@
-/* https://stackoverflow.com/a/22196760/3262054 */
-/* Account for the navbar which is why it is 80% */
-.vertical-center {
-  min-height: 80%;
-  min-height: 80vh;
-  /*display: flex;*/
-  align-items: center;
-}
-
 body {
-  overflow-y:scroll;
+    overflow-y: scroll;
 }

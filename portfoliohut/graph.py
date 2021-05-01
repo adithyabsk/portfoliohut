@@ -58,7 +58,8 @@ def multi_plot(df, addAll=True):
                 buttons=([button_all] * addAll)
                 + list(df.columns.map(lambda column: create_layout_button(column))),
             )
-        ]
+        ],
+        plot_bgcolor="rgba(0,0,0,0)",
     )
 
     fig.update_xaxes(
@@ -74,6 +75,10 @@ def multi_plot(df, addAll=True):
                 ]
             )
         ),
+        showgrid=False,
+    )
+    fig.update_yaxes(
+        showgrid=False,
     )
     graph = fig.to_json()
     return graph

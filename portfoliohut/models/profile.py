@@ -150,9 +150,9 @@ class Profile(models.Model):
     def get_most_recent_return(self) -> float:
         returns = self.get_cumulative_returns()
         if not returns.empty:
-            return self.get_cumulative_returns().iloc[-1]
+            return returns.iloc[-1]
         else:
-            return float("nan")
+            return 0
 
     def is_cash_available(self, date_time: datetime, value: Decimal) -> bool:
         """Validate if `Profile` contains enough balance to fund a transaction on a particular date.
