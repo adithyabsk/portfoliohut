@@ -14,7 +14,7 @@ NUM_TRANSACTIONS = 10
 @login_required
 def returns_graph(request):
     profile = get_object_or_404(Profile, user=request.user)
-    graph_data = profile.get_cumulative_returns().to_series() * 100
+    graph_data = profile.get_cumulative_returns().to_series() * 100 * 10
     graph = None
     if not graph_data.empty:
         start_date = graph_data.index[0]
