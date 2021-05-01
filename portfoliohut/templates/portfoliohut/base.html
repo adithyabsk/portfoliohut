@@ -7,17 +7,20 @@
   <meta name="viewport" content="width=device-width, initial-scale=1">
 
   {# Bootstrap CSS Bundle #}
-  {% bootstrap_css %}
+  <link rel="stylesheet" type="text/css" href="{% static 'portfoliohut/css/bootstrap4-harbor.css' %}"/>
+
   {# Bootstrap JS Bundle #}
   {% bootstrap_javascript jquery='full' %}
-
-  {# Custom CSS #}
-  <link rel="stylesheet" href="{% static 'portfoliohut/css/socialnetwork.css' %}">
 
   {% block head %}
   {% endblock head %}
 
-  <nav class="navbar navbar-light bg-light navbar-expand-lg">
+  {# Custom CSS #}
+  <link rel="stylesheet" href="{% static 'portfoliohut/css/socialnetwork.css' %}">
+</head>
+<body>
+<header>
+  <nav class="navbar bg-dark navbar-dark navbar-expand-lg text-white">
     <div class="container-fluid">
       {% url "landing-page" as landing_page %}
       {% url "global-competition" as global_competition_url %}
@@ -32,66 +35,59 @@
       <a class="navbar-brand" href="{{ landing_page }}">
         <img src="{% static 'portfoliohut/images/logo.svg' %}" alt="Portfolio Hut Logo" style="width: 200px">
       </a>
-      <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav"
+      <button class="navbar-toggler" type="button" data-toggle="collapse" data-target="#navbarNav"
               aria-controls="navbarNav" aria-expanded="false" aria-label="Toggle navigation" id="id_show_nav_button">
         <span class="navbar-toggler-icon"></span>
       </button>
       <div class="collapse navbar-collapse" id="navbarNav">
-        <ul class="navbar-nav">
+        <ul class="navbar-nav mr-auto mt-2 mt-lg-0">
           {# Setup showing which page is active #}
           {% if user.is_authenticated %}
             <li class="nav-item">
               <b>
-                <a class="nav-link" href="{{ profile_url }}"
+                <a class="nav-link text-white" href="{{ profile_url }}"
                    id="id_logged_in_user_name">{{ request.user.get_full_name }}</a>
               </b>
             </li>
           {% else %}
             <li class="nav-item">
-              <a class="nav-link" href="{{ login_url }}" id="id_nav_logout">Login</a>
+              <a class="nav-link text-white" href="{{ login_url }}" id="id_nav_logout">Login</a>
             </li>
           {% endif %}
           <li class="nav-item">
-            <a class="nav-link {% if global_competition_url in request.path %} active {% endif %}"
+            <a class="nav-link text-white {% if global_competition_url in request.path %} active {% endif %}"
                href="{{ global_competition_url }}" id="id_nav_global_competition">Global Competition</a>
           </li>
           <li class="nav-item">
-            <a class="nav-link {% if friends_competition_url in request.path %} active {% endif %}"
+            <a class="nav-link text-white {% if friends_competition_url in request.path %} active {% endif %}"
                href="{{ friends_competition_url }}" id="id_nav_friends_competition">Friends Competition</a>
           </li>
           <li class="nav-item">
-            <a class="nav-link {% if portfolio_url in request.path %} active {% endif %}"
+            <a class="nav-link text-white {% if portfolio_url in request.path %} active {% endif %}"
                href="{{ portfolio_url }}" id="id_nav_portfolio">My Portfolio</a>
           </li>
           <li class="nav-item">
-            <a class="nav-link {% if add_transaction_url in request.path %} active {% endif %}"
+            <a class="nav-link text-white {% if add_transaction_url in request.path %} active {% endif %}"
                href="{{ add_transaction_url }}" id="id_nav_add_transaction">Add Transaction</a>
           </li>
           {% if user.is_authenticated %}
             <li class="nav-item">
-              <a class="nav-link" href="{{ logout_url }}" id="id_nav_logout">Logout</a>
+              <a class="nav-link text-white" href="{{ logout_url }}" id="id_nav_logout">Logout</a>
             </li>
           {% endif %}
         </ul>
       </div>
     </div>
   </nav>
-</head>
-<body>
-<div class="container py-4">
-  {# Show alerts at the top of the screen as necessary #}
-{#  {% for message in messages %}#}
-{#    <div class="alert {{ message.tags }} alert-dismissible fade show" role="alert">#}
-{#      {{ message }}#}
-{#      <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close">#}
-{#      </button>#}
-{#    </div>#}
-{#  {% endfor %}#}
-  {% bootstrap_messages %}
-
-  {% block content %}
-  {% endblock content %}
-
-</div>
+</header>
+<main role="main">
+  {% block landing_page %}
+    <div class="container py-4">
+      {% bootstrap_messages %}
+      {% block content %}
+      {% endblock content %}
+    </div>
+  {% endblock landing_page %}
+</main>
 </body>
 </html>

@@ -1,17 +1,23 @@
 {% extends 'portfoliohut/base.html' %}
+{% load bootstrap4 %}
 {% block head %}
-  <title>Hello World!</title>
+  <title>Login</title>
 {% endblock head %}
 
 {% block content %}
-  <div class="row mx-auto">
-    <h1 id="id_page_name">Login</h1>
-    <form method="post" action="{% url 'login' %}">
-      {% csrf_token %}
-      <table>
-        {{ login_form }}
-      </table>
-      <button type="submit" class="btn btn-primary" id="id_login_button">Submit</button>
-    </form>
+  {% url "register" as register_url %}
+  <h1 id="id_page_name" class="text-center">Login</h1>
+  <div class="d-flex justify-content-center align-items-center container ">
+    <div class="row">
+      <form method="post" action="{% url 'login' %}">
+        {% csrf_token %}
+        {% bootstrap_form login_form %}
+        {% buttons %}
+          <button type="submit" class="btn btn-primary" id="id_login_button">Submit</button>
+          <a href="{{ register_url }}"><button type="button" class="btn btn-primary" id="id_register_button">Register</button></a>
+        {% endbuttons %}
+      </form>
+    </div>
   </div>
+
 {% endblock content %}
