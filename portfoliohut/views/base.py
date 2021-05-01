@@ -89,22 +89,23 @@ def friends_competition(request):
         # Calculate percent returns for each friend
         no_friends_flag = len(unsorted_friends_profiles) <= 0
         if no_friends_flag:
+            context["no_friends_flag"] = True
             return render(request, "portfoliohut/stream.html", context)
 
         # Calculate percent returns for each public profile
-        annotated_profiles = []
+        # annotated_profiles = []
         friends_series = []
         friends_names = []
         for profile in unsorted_friends_profiles:
-            profile.returns = profile.get_most_recent_return()
-            annotated_profiles.append(profile)
+            # profile.returns = profile.get_most_recent_return()
+            # annotated_profiles.append(profile)
             friend_returns = profile.get_cumulative_returns()
             friends_series.append(friend_returns)
             friends_names.append(profile.user.first_name + " " + profile.user.last_name)
 
         # Sort friends by their percent returns
         my_profile.returns = my_profile.get_most_recent_return()
-        annotated_profiles.append(my_profile)
+        # annotated_profiles.append(my_profile)
         # profiles = _sort_profiles_by_percent_returns(annotated_profiles)
 
         # Create the competition table

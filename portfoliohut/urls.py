@@ -13,8 +13,10 @@ from portfoliohut.views import (
     logout_action,
     portfolio,
     profile,
+    profile_returns,
     register_action,
     respond_to_friend_request,
+    returns_graph,
     transaction_input,
 )
 
@@ -39,4 +41,6 @@ urlpatterns = [
     ),
     path("landing-page", landing_page, name="landing-page"),
     path("display-table", display_table, name="display-table"),
+    path("profile-returns/<str:username>", profile_returns, name="profile-returns"),
+    path("returns-graph", returns_graph, name="returns-graph"),
 ]

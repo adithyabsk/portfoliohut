@@ -2,8 +2,14 @@
 
 from .account_management import login_action, logout_action, register_action
 from .base import display_table, friends_competition, global_competition, landing_page
-from .portfolio import portfolio
-from .profile import friend, logged_in_user_profile, profile, respond_to_friend_request
+from .portfolio import portfolio, returns_graph
+from .profile import (
+    friend,
+    logged_in_user_profile,
+    profile,
+    profile_returns,
+    respond_to_friend_request,
+)
 from .transactions import transaction_input
 
 __all__ = [
@@ -20,4 +26,6 @@ __all__ = [
     "profile",
     "portfolio",
     "display_table",
+    "profile_returns",
+    "returns_graph",
 ]

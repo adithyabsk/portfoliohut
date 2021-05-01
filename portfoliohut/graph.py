@@ -75,7 +75,7 @@ def multi_plot(df, addAll=True):
             )
         ),
     )
-    graph = fig.to_html(full_html=False, default_width="90%", default_height="30%")
+    graph = fig.to_json()
     return graph
 
 

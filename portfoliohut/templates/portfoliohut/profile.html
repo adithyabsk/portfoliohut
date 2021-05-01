@@ -19,10 +19,19 @@
         <small class="text-muted"><i class="fas fa-image mr-0"></i>Friends</small>
       </li>
       {% if profile.profile_type == 'public' or profile.user == request.user or profile in request.user.friends.all %}
-      <li class="list-inline-item">
-        <h5 class="font-weight-bold mb-0 d-block "> {% firstof profile.get_most_recent_return|floatformat:-2 "No Return " %}%</h5>
-        <small class="text-muted"> <i class="fas fa-user mr-0"></i>Current Returns</small>
-      </li>
+        <!-- Spinner -->
+        <div class="spinner-border spinner-border-sm" role="status">
+          <span class="sr-only">Loading...</span>
+        </div>
+
+        <!-- Returns -->
+        <li class="list-inline-item">
+          <div class="container invisible" role="status" id="content">
+              <div id="profile-returns-id"></div>
+            <small class="text-muted"> <i class="fas fa-user mr-0"></i>Current Returns</small>
+          </div>
+        </li>
+
       {% endif %}
     </ul>
   </div>
@@ -169,4 +178,28 @@
           </div>
         {% endif %}
   </div>
+  <script>
+    function remove_spinner() {
+        $(".spinner-border").remove()
+        let content = document.getElementById('content');
+        content.classList.remove("invisible")
+    }
+
+    function update_profile_returns(querystring = '', url = "{% url 'profile-returns' profile.user.username %}") {
+        var xhr = new XMLHttpRequest();
+        xhr.onreadystatechange = function() {
+            if (xhr.readyState == XMLHttpRequest.DONE ) {
+                if (xhr.status == 200) {
+                    var div = document.getElementById('profile-returns-id');
+                    div.innerHTML = xhr.responseText;
+                }
+                remove_spinner()
+            }
+        };
+        xhr.open('GET', url + querystring, true);
+        xhr.send();
+    }
+
+    update_profile_returns('', "{% url 'profile-returns' profile.user.username %}");
+  </script>
 {% endblock content %}

@@ -1,6 +1,9 @@
+import math
+
 from django.contrib.auth.decorators import login_required
 from django.contrib.auth.models import User
 from django.db.models import DecimalField, ExpressionWrapper, F
+from django.http import HttpResponse
 from django.shortcuts import redirect, render
 from django.urls import reverse
 
@@ -11,6 +14,22 @@ from portfoliohut.models import EquityInfo, FinancialActionType, PortfolioItem, 
 @login_required
 def logged_in_user_profile(request):
     return redirect(reverse("profile", args=[request.user.username]))
+
+
+@login_required
+def profile_returns(request, username):
+    user = User.objects.filter(username=username)
+    if not user.exists():
+        return HttpResponse("")
+    user = user[0]
+    returns = user.profile.get_most_recent_return()
+    if math.isnan(returns):
+        return HttpResponse("<h5 class='font-weight-bold mb-0 d-block'>No Return %<h5>")
+    return HttpResponse(
+        "<h5 class='font-weight-bold mb-0 d-block'>{returns}%<h5>".format(
+            returns=returns,
+        )
+    )
 
 
 @login_required
