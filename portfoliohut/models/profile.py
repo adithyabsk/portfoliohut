@@ -75,6 +75,9 @@ def _calc_returns(transaction_qset: "QuerySet[Transaction]"):
     stocks_df = pd.concat(price_series_list, axis=1).sort_index()
 
     # Build a DataFrame similar to previous with the cumulative quantities at each date.
+    # TODO: There is another bug here where the first day of returns may be calculated incorrectly
+    #       since we use the close price to compute returns rather than the price that a user paid
+    #       for the equity.
     quantity_series_list = []
     for ticker in distinct_tickers:
         dates, quantities = zip(
@@ -82,8 +85,11 @@ def _calc_returns(transaction_qset: "QuerySet[Transaction]"):
                 "date_time__date", "quantity"
             )
         )
+        # Note: this is where the bug is
+        # Sum the stocks bought on the same day
+        quantity_series = pd.Series(quantities, index=dates, dtype="int64", name=ticker)
         quantity_series_list.append(
-            pd.Series(quantities, index=dates, dtype="int64", name=ticker)
+            quantity_series.groupby(quantity_series.index).sum()
         )
     quantities_df = (
         pd.concat(quantity_series_list, axis=1)
@@ -100,8 +106,12 @@ def _calc_returns(transaction_qset: "QuerySet[Transaction]"):
     ).values_list("date_time__date", "price")
     if sale_cash_qset.exists():
         sale_dates, sale_prices = zip(*sale_cash_qset)
+        sale_cash_series = pd.Series(sale_prices, index=sale_dates, name="Cash")
+        # Handle multiple sales on a single day (note this doesn't have the
+        # same potential bug as above)
         sale_cash_series = (
-            pd.Series(sale_prices, index=sale_dates, name="Cash")
+            sale_cash_series.groupby(sale_cash_series.index)
+            .sum()
             .cumsum()
             .reindex(stocks_df.index, method="ffill")
             .fillna(0)
