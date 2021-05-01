@@ -114,3 +114,9 @@ def friends_competition(request):
 
 def landing_page(request):
     return render(request, "portfoliohut/landing.html")
+
+
+def page_not_found(request, exeption=None):
+    response = render(request, "portfoliohut/error.html", {})
+    response.status_code = 400
+    return response

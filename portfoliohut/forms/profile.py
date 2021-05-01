@@ -22,11 +22,11 @@ class ProfileForm(forms.ModelForm):
             "profile_type": forms.Select(
                 attrs={
                     "class": "narrow-select",
-                    # "style": " width:20%; height: 15%; line-height: 1.5; border-radius: 5px;border: 1px solid #ccc;box-shadow: 1px 1px 1px #999;",
                 }
             ),
         }
-        labels = {"bio": "", "profile_type": mark_safe("Profile Visibility")}
+        labels = {"bio": "", "profile_type": "Profile Visibility"}
+
 
     field_order = ["bio", "profile_type"]
 
