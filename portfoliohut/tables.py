@@ -7,8 +7,8 @@ from portfoliohut.models import PortfolioItem, Profile, Transaction
 
 
 class PortfolioItemTable(tables.Table):
-    total_value = tables.Column(accessor=A("total_value"))
-    # action = tables.Column(accessor=A("viewable_type"))
+    total_value = Column(accessor=A("total_value"))
+    # action = Column(accessor=A("viewable_type"))
 
     class Meta:
         model = PortfolioItem
@@ -25,7 +25,7 @@ class PortfolioItemTable(tables.Table):
 
 class ReturnsTable(tables.Table):
     rank = Column("rank")
-    returns = tables.Column("returns")
+    returns = Column("returns")
 
     class Meta:
         model = Profile

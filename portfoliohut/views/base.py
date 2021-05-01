@@ -1,5 +1,3 @@
-import math
-
 from django.contrib.auth.decorators import login_required
 from django.http import HttpResponse
 from django.shortcuts import render
@@ -12,7 +10,7 @@ from portfoliohut.tables import ReturnsTable
 NUM_LEADERS = 10
 
 
-def _build_competition_table(profiles, page, request):
+def _build_competition_table(profiles, request):
     competition_table = ReturnsTable(profiles)
     RequestConfig(request).configure(competition_table)
     return HttpResponse(competition_table.as_html(request))
@@ -40,22 +38,22 @@ def display_global_table(request):
 
     # Calculate percent returns for each public profile
     annotated_profiles, curr_prof_rank = _annotate_profiles_with_returns(
-            unsorted_public_profiles, request.user.profile
+        unsorted_public_profiles, request.user.profile
     )
 
-        # Create the competition table
-        page = request.GET.get("page")
-        if page is None and curr_prof_rank is not None:
-            page = math.ceil(curr_prof_rank / NUM_LEADERS)
-        else:
-            page = 1
+    # # Create the competition table
+    # page = request.GET.get("page")
+    # if page is None and curr_prof_rank is not None:
+    #     page = math.ceil(curr_prof_rank / NUM_LEADERS)
+    # else:
+    #     page = 1
 
-        context["competition_table"] = _build_competition_table(
-            annotated_profiles, page
-        )
+    # context["competition_table"] = _build_competition_table(
+    #     annotated_profiles, page
+    # )
 
     # Create the competition table
-    return _build_competition_table(profiles, page, request)
+    return _build_competition_table(annotated_profiles, request)
 
 
 @login_required
@@ -79,17 +77,15 @@ def display_friends_table(request):
     annotated_profiles.append(my_profile)
 
     # Sort friends by their percent returns
-    profiles = sorted(
-            annotated_profiles, key=lambda prof: prof.returns, reverse=True
-        )
+    profiles = sorted(annotated_profiles, key=lambda prof: prof.returns, reverse=True)
 
     # Create the competition table
-    rank = profiles.index(my_profile) + 1
-    page_num = math.ceil(rank / NUM_LEADERS)
-    page = request.GET.get("page", page_num)
+    # rank = profiles.index(my_profile) + 1
+    # page_num = math.ceil(rank / NUM_LEADERS)
+    # page = request.GET.get("page", page_num)
 
     # Create the competition table
-    return _build_competition_table(profiles, page, request)
+    return _build_competition_table(profiles, request)
 
 
 @login_required
