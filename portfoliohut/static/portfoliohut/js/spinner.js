@@ -14,7 +14,7 @@ function displayProfileReturns(querystring = '', url = "{% url 'profile-returns'
                 var div = document.getElementById('profile-returns-id');
                 div.innerHTML = xhr.responseText;
             }
-            remove_spinner()
+            removeSpinner()
         }
     };
     xhr.open('GET', url + querystring, true);
