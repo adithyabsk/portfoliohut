@@ -40,9 +40,6 @@ def _annotate_profiles_with_returns(unsorted_profiles):
 @login_required
 def display_table(request):
     public_profiles = Profile.objects.filter(profile_type="public")
-    # unsorted_public_profiles = public_profiles.all()
-    # annotated_profiles = _annotate_profiles_with_returns(unsorted_public_profiles)
-    # profiles = _sort_profiles_by_percent_returns(annotated_profiles)
     competition_table = ReturnsTable(public_profiles)
     RequestConfig(request).configure(competition_table)
     return HttpResponse(competition_table.as_html(request))
@@ -53,25 +50,6 @@ def global_competition(request):
     if request.method == "GET":
         context = {}
         context["page_name"] = "Global Competition"
-
-        # Get all public profiles
-        # public_profiles = Profile.objects.filter(profile_type="public")
-        # unsorted_public_profiles = public_profiles.all()
-
-        # # Calculate percent returns for each public profile
-        # annotated_profiles = _annotate_profiles_with_returns(unsorted_public_profiles)
-
-        # # Sort public profiles by their percent returns
-        # profiles = _sort_profiles_by_percent_returns(annotated_profiles)
-
-        # # Create the competition table
-        # page_num = 1
-        # if request.user.profile in profiles:
-        #     rank = profiles.index(request.user.profile) + 1
-        #     page_num = math.ceil(rank / NUM_LEADERS)
-        # page = request.GET.get("page", page_num)
-        # context["competition_table"] = _build_competition_table(profiles, page)
-
         return render(request, "portfoliohut/stream.html", context)
 
 
@@ -93,26 +71,15 @@ def friends_competition(request):
             return render(request, "portfoliohut/stream.html", context)
 
         # Calculate percent returns for each public profile
-        # annotated_profiles = []
         friends_series = []
         friends_names = []
         for profile in unsorted_friends_profiles:
-            # profile.returns = profile.get_most_recent_return()
-            # annotated_profiles.append(profile)
             friend_returns = profile.get_cumulative_returns()
             friends_series.append(friend_returns)
             friends_names.append(profile.user.first_name + " " + profile.user.last_name)
 
         # Sort friends by their percent returns
         my_profile.returns = my_profile.get_most_recent_return()
-        # annotated_profiles.append(my_profile)
-        # profiles = _sort_profiles_by_percent_returns(annotated_profiles)
-
-        # Create the competition table
-        # rank = profiles.index(my_profile) + 1
-        # page_num = math.ceil(rank / NUM_LEADERS)
-        # page = request.GET.get("page", page_num)
-        # context["competition_table"] = _build_competition_table(profiles, page)
 
         # Create the competition graph
         user_returns = my_profile.get_cumulative_returns()
