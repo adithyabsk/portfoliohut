@@ -41,17 +41,6 @@ def display_global_table(request):
         unsorted_public_profiles, request.user.profile
     )
 
-    # # Create the competition table
-    # page = request.GET.get("page")
-    # if page is None and curr_prof_rank is not None:
-    #     page = math.ceil(curr_prof_rank / NUM_LEADERS)
-    # else:
-    #     page = 1
-
-    # context["competition_table"] = _build_competition_table(
-    #     annotated_profiles, page
-    # )
-
     # Create the competition table
     return _build_competition_table(annotated_profiles, request)
 
@@ -59,33 +48,23 @@ def display_global_table(request):
 @login_required
 def display_friends_table(request):
     # Get all public profiles
-    my_profile = Profile.objects.get(user=request.user)
-    friends_profiles = Profile.objects.filter(friends__pk=my_profile.id)
-    unsorted_friends_profiles = friends_profiles.all()
+    unsorted_friends_profiles = request.user.profile.friends.all()
+    my_profile = Profile.objects.filter(user=request.user)
+    unsorted_friends_profiles = unsorted_friends_profiles.union(my_profile)
+    print(unsorted_friends_profiles)
 
     # Calculate percent returns for each friend
     no_friends_flag = len(unsorted_friends_profiles) <= 0
     if no_friends_flag:
         return None
 
-    # Calculate percent returns for each friend
-    annotated_profiles = []
-    for profile in unsorted_friends_profiles:
-        profile.returns = profile.get_most_recent_return()
-        annotated_profiles.append(profile)
-    my_profile.returns = my_profile.get_most_recent_return()
-    annotated_profiles.append(my_profile)
-
     # Sort friends by their percent returns
-    profiles = sorted(annotated_profiles, key=lambda prof: prof.returns, reverse=True)
+    annotated_profiles, curr_prof_rank = _annotate_profiles_with_returns(
+        unsorted_friends_profiles, request.user.profile
+    )
 
     # Create the competition table
-    # rank = profiles.index(my_profile) + 1
-    # page_num = math.ceil(rank / NUM_LEADERS)
-    # page = request.GET.get("page", page_num)
-
-    # Create the competition table
-    return _build_competition_table(profiles, request)
+    return _build_competition_table(annotated_profiles, request)
 
 
 @login_required
