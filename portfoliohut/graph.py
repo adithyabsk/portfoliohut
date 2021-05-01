@@ -20,7 +20,7 @@ def combine_data(list_series, friends_list, user_returns, index_returns):
 
     merged_df = pd.concat(new_series_list, axis=1)
     merged_df.insert(loc=0, column="My Returns", value=user_returns)
-    merged_df.insert(loc=1, column="S&P500", value=index_returns)
+    merged_df.insert(loc=1, column="S&P 500", value=index_returns)
     return merged_df
 
 
@@ -80,14 +80,13 @@ def multi_plot(df, addAll=True):
     fig.update_yaxes(
         showgrid=False,
     )
-    graph = fig.to_html(full_html=False)
-
+    graph = fig.to_json()
     return graph
 
 
 def combine_index_user(user_returns, index_returns):
     user_returns = user_returns.rename("My Returns")
-    index_returns = index_returns.rename("S&P500")
+    index_returns = index_returns.rename("S&P 500")
     merged_df = pd.concat([user_returns, index_returns], axis=1)
     return merged_df.dropna()
 

@@ -1,19 +1,19 @@
-import django_tables2 as tables
 from django.shortcuts import reverse
 from django.utils.html import mark_safe
+from django_tables2 import Column, tables
 from django_tables2.utils import A
 
 from portfoliohut.models import PortfolioItem, Profile, Transaction
 
 
 class PortfolioItemTable(tables.Table):
-    total_value = tables.Column(accessor=A("total_value"))
-    action = tables.Column(accessor=A("viewable_type"))
+    total_value = Column(accessor=A("total_value"))
+    # action = Column(accessor=A("viewable_type"))
 
     class Meta:
         model = PortfolioItem
-        exclude = ("id", "profile", "type")
-        sequence = ("action", "ticker", "created", "quantity", "price", "total_value")
+        exclude = ("id", "profile", "created")
+        sequence = ("type", "ticker", "quantity", "price", "total_value")
         orderable = False
 
     def render_total_value(self, value):
@@ -24,8 +24,8 @@ class PortfolioItemTable(tables.Table):
 
 
 class ReturnsTable(tables.Table):
-    rank = tables.Column("rank")
-    returns = tables.Column("returns")
+    rank = Column("Rank")
+    returns = Column("Returns")
 
     class Meta:
         model = Profile
@@ -57,20 +57,18 @@ class TransactionTable(tables.Table):
     Has in built pagination feature as well.
     """
 
-    action = tables.Column(accessor="quantity_annotator", verbose_name="Action")
+    action = Column(accessor="quantity_annotator", verbose_name="Action")
+    # viewable_quantity = Column(accessor="viewable_quantity", verbose_name="Quantity")
 
     class Meta:
         model = Transaction
-        sequence = (
-            "type",
-            "ticker",
-            "date_time",
-            "price",
-        )
-        exclude = (
-            "profile",
-            "id",
-            "time",
-            "quantity",
-        )
+        sequence = ("action", "ticker", "date_time", "quantity", "price")
+        exclude = ("type", "profile", "id", "time")
         attrs = {"width": "100%"}
+        orderable = False
+
+    def render_total_value(self, value):
+        return "${:,}".format(value)
+
+    def render_price(self, value):
+        return "${:,}".format(value)

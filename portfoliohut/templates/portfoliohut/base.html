@@ -12,6 +12,13 @@
   {# Bootstrap JS Bundle #}
   {% bootstrap_javascript jquery='full' %}
 
+  {# Custom CSS #}
+  <link rel="stylesheet" href="{% static 'portfoliohut/css/socialnetwork.css' %}">
+  <link rel="stylesheet" href="{% static 'portfoliohut/css/spinner.css' %}">
+
+  {# Custom JS #}
+  <script src="{% static 'portfoliohut/js/spinner.js' %}" type="text/javascript"></script>
+
   {% block head %}
   {% endblock head %}
 
@@ -84,9 +91,10 @@
   {% block landing_page %}
     <div class="container py-4">
       {% bootstrap_messages %}
-      {% block content %}
-      {% endblock content %}
-    </div>
+
+    {% block content %}
+    {% endblock content %}
+</div>
   {% endblock landing_page %}
 </main>
 </body>

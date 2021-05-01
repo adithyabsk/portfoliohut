@@ -1,9 +1,23 @@
 """PortfolioHut views"""
 
 from .account_management import login_action, logout_action, register_action
-from .base import friends_competition, global_competition, landing_page, page_not_found
-from .portfolio import portfolio
-from .profile import friend, logged_in_user_profile, profile, respond_to_friend_request
+from .base import (
+    display_friends_table,
+    display_global_table,
+    friends_competition,
+    friends_returns_graph,
+    global_competition,
+    landing_page,
+    page_not_found,
+)
+from .portfolio import portfolio, returns_graph
+from .profile import (
+    friend,
+    logged_in_user_profile,
+    profile,
+    profile_returns,
+    respond_to_friend_request,
+)
 from .transactions import transaction_input
 
 __all__ = [
@@ -20,4 +34,9 @@ __all__ = [
     "transaction_input",
     "profile",
     "portfolio",
+    "display_friends_table",
+    "display_global_table",
+    "profile_returns",
+    "returns_graph",
+    "friends_returns_graph",
 ]

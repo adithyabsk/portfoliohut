@@ -4,8 +4,11 @@ from django.urls import path
 from django.views.generic import RedirectView
 
 from portfoliohut.views import (
+    display_friends_table,
+    display_global_table,
     friend,
     friends_competition,
+    friends_returns_graph,
     global_competition,
     landing_page,
     logged_in_user_profile,
@@ -13,8 +16,10 @@ from portfoliohut.views import (
     logout_action,
     portfolio,
     profile,
+    profile_returns,
     register_action,
     respond_to_friend_request,
+    returns_graph,
     transaction_input,
 )
 
@@ -42,4 +47,9 @@ urlpatterns = [
         name="respond-to-friend-request",
     ),
     path("landing-page", landing_page, name="landing-page"),
+    path("display-friends-table", display_friends_table, name="display-friends-table"),
+    path("display-global-table", display_global_table, name="display-global-table"),
+    path("profile-returns/<str:username>", profile_returns, name="profile-returns"),
+    path("returns-graph", returns_graph, name="returns-graph"),
+    path("friends-returns-graph", friends_returns_graph, name="friends-returns-graph"),
 ]
