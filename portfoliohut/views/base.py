@@ -51,7 +51,6 @@ def display_friends_table(request):
     unsorted_friends_profiles = request.user.profile.friends.all()
     my_profile = Profile.objects.filter(user=request.user)
     unsorted_friends_profiles = unsorted_friends_profiles.union(my_profile)
-    print(unsorted_friends_profiles)
 
     # Calculate percent returns for each friend
     no_friends_flag = len(unsorted_friends_profiles) <= 0

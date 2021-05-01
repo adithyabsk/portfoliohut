@@ -131,7 +131,6 @@
                   <tr>
                     <th scope="col">Username</th>
                     <th scope="col">Name</th>
-                    <th scope="col">Status</th>
                   </tr>
                   </thead>
                   <tbody>
@@ -142,14 +141,6 @@
                         {{ friend_request.user.username }}
                       </a></td>
                       <td>{{ friend_request.user.first_name }} {{ friend_request.user.last_name }}</td>
-                      <td>
-                        <a href="{% url 'respond-to-friend-request' friend_request.user.username  'accept' %}">
-                          <button class="btn btn-primary">Accept</button>
-                        </a>
-                        <a href="{% url 'respond-to-friend-request' friend_request.user.username 'decline' %}">
-                          <button class="btn btn-primary">Decline</button>
-                        </a>
-                      </td>
                     </tr>
 
                   {% endfor %}
