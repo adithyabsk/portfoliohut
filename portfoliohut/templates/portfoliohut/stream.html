@@ -21,29 +21,28 @@
     </div>
   {% else %}
 
-    <!-- Graph -->
-    <!-- {% if graph %}
-      {{ graph|safe }}
-    {% endif %} -->
-
     <!-- Spinner -->
-    <div class="spinner-border first-finished" role="status" id="spinner">
+    <div class="spinner-border" role="status" id="spinner">
       <span class="sr-only">Loading...</span>
     </div>
 
     <!-- Graph -->
-    <div class="container invisible" role="status" id="content">
-      <div id="returns-graph-id"></div>
-    </div>
+    {% if page_name == "Friends Competition" %}
+      <div class="container invisible" role="status" id="content">
+        <div id="returns-graph-id"></div>
+      </div>
+    {% endif %}
 
     <!-- Competition Table -->
     <div class="container invisible" role="status" id="table">
       {% ajax_table "competition_table_id" "display-table" %}
     </div>
 
-    <script>
-      displayPortfolioGraph('', "{% url 'friends-returns-graph' %}");
-    </script>
+    {% if page_name == "Friends Competition" %}
+      <script>
+          displayPortfolioGraph('', "{% url 'friends-returns-graph' %}");
+      </script>
+    {% endif %}
   {% endif %}
 
 

@@ -1,5 +1,5 @@
 function removeSpinner() {
-    $(".spinner-border").remove()
+    $(".spinner-border").fadeOut()
     let content = document.getElementById('content');
     content.classList.remove("invisible")
 }
