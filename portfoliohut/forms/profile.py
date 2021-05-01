@@ -1,5 +1,4 @@
 from django import forms
-from django.utils.safestring import mark_safe
 
 from portfoliohut.models import Profile
 
@@ -26,7 +25,6 @@ class ProfileForm(forms.ModelForm):
             ),
         }
         labels = {"bio": "", "profile_type": "Profile Visibility"}
-
 
     field_order = ["bio", "profile_type"]
 
