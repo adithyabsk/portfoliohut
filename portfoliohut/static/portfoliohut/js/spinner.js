@@ -23,7 +23,7 @@ function displayProfileReturns(querystring = '', url = "{% url 'profile-returns'
 
 // AJAX function modeled after django-ajax-tables
 // https://pypi.org/project/django-ajax-tables/
-function displayPortfolioGraph(querystring = '', url = "{% url 'returns-graph' %}") {
+function displayPortfolioGraph(querystring, url) {
     var xhr = new XMLHttpRequest();
     xhr.onreadystatechange = function() {
         if (xhr.readyState == XMLHttpRequest.DONE ) {

@@ -54,6 +54,30 @@ def global_competition(request):
 
 
 @login_required
+def friends_returns_graph(request):
+    my_profile = Profile.objects.get(user=request.user)
+    friends_profiles = Profile.objects.filter(friends__pk=my_profile.id)
+    unsorted_friends_profiles = friends_profiles.all()
+
+    friends_series = []
+    friends_names = []
+    for profile in unsorted_friends_profiles:
+        friend_returns = profile.get_cumulative_returns()
+        friends_series.append(friend_returns)
+        friends_names.append(profile.user.first_name + " " + profile.user.last_name)
+
+    # Sort friends by their percent returns
+    # my_profile.returns = my_profile.get_most_recent_return()
+
+    # Create the competition graph
+    user_returns = my_profile.get_cumulative_returns()
+    index_returns = _get_sp_index(user_returns.index[0])
+    merged_df = combine_data(friends_series, friends_names, user_returns, index_returns)
+    graph = multi_plot(merged_df)
+    return HttpResponse(graph)
+
+
+@login_required
 def friends_competition(request):
     if request.method == "GET":
         context = {}
@@ -71,24 +95,23 @@ def friends_competition(request):
             return render(request, "portfoliohut/stream.html", context)
 
         # Calculate percent returns for each public profile
-        friends_series = []
-        friends_names = []
-        for profile in unsorted_friends_profiles:
-            friend_returns = profile.get_cumulative_returns()
-            friends_series.append(friend_returns)
-            friends_names.append(profile.user.first_name + " " + profile.user.last_name)
+        # friends_series = []
+        # friends_names = []
+        # for profile in unsorted_friends_profiles:
+        #     friend_returns = profile.get_cumulative_returns()
+        #     friends_series.append(friend_returns)
+        #     friends_names.append(profile.user.first_name + " " + profile.user.last_name)
 
-        # Sort friends by their percent returns
-        my_profile.returns = my_profile.get_most_recent_return()
+        # # Sort friends by their percent returns
+        # #my_profile.returns = my_profile.get_most_recent_return()
 
-        # Create the competition graph
-        user_returns = my_profile.get_cumulative_returns()
-        index_returns = _get_sp_index(user_returns.index[0])
-        merged_df = combine_data(
-            friends_series, friends_names, user_returns, index_returns
-        )
-        graph = multi_plot(merged_df)
-        context["graph"] = graph
+        # # Create the competition graph
+        # user_returns = my_profile.get_cumulative_returns()
+        # index_returns = _get_sp_index(user_returns.index[0])
+        # merged_df = combine_data(
+        #     friends_series, friends_names, user_returns, index_returns
+        # )
+        # graph = multi_plot(merged_df)
 
         return render(request, "portfoliohut/stream.html", context)
 

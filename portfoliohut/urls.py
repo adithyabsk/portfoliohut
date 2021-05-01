@@ -6,6 +6,7 @@ from portfoliohut.views import (
     display_table,
     friend,
     friends_competition,
+    friends_returns_graph,
     global_competition,
     landing_page,
     logged_in_user_profile,
@@ -43,4 +44,5 @@ urlpatterns = [
     path("display-table", display_table, name="display-table"),
     path("profile-returns/<str:username>", profile_returns, name="profile-returns"),
     path("returns-graph", returns_graph, name="returns-graph"),
+    path("friends-returns-graph", friends_returns_graph, name="friends-returns-graph"),
 ]

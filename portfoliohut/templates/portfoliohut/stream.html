@@ -3,6 +3,7 @@
 <!-- {% load render_table from django_tables2 %} -->
 {% block head %}
 {% load ajax_table from ajax_table %}
+  <script src="https://cdn.plot.ly/plotly-latest.min.js"></script>
   <title>{{ page_name }}</title>
 {% endblock head %}
 <!-- {% load render_table from django_tables2 %} -->
@@ -21,19 +22,29 @@
   {% else %}
 
     <!-- Graph -->
-    {% if graph %}
+    <!-- {% if graph %}
       {{ graph|safe }}
-    {% endif %}
+    {% endif %} -->
 
     <!-- Spinner -->
-    <div class="spinner-border" role="status" id="spinner">
+    <div class="spinner-border first-finished" role="status" id="spinner">
       <span class="sr-only">Loading...</span>
     </div>
 
-    <!-- Competition Table -->
+    <!-- Graph -->
     <div class="container invisible" role="status" id="content">
+      <div id="returns-graph-id"></div>
+    </div>
+
+    <!-- Competition Table -->
+    <div class="container invisible" role="status" id="table">
       {% ajax_table "competition_table_id" "display-table" %}
     </div>
+
+    <script>
+      displayPortfolioGraph('', "{% url 'friends-returns-graph' %}");
+    </script>
   {% endif %}
+
 
 {% endblock content %}

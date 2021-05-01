@@ -1,7 +1,13 @@
 """PortfolioHut views"""
 
 from .account_management import login_action, logout_action, register_action
-from .base import display_table, friends_competition, global_competition, landing_page
+from .base import (
+    display_table,
+    friends_competition,
+    friends_returns_graph,
+    global_competition,
+    landing_page,
+)
 from .portfolio import portfolio, returns_graph
 from .profile import (
     friend,
@@ -28,4 +34,5 @@ __all__ = [
     "display_table",
     "profile_returns",
     "returns_graph",
+    "friends_returns_graph",
 ]
