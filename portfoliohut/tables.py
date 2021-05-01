@@ -1,10 +1,9 @@
 import itertools
 import math
 
-import django_tables2 as tables
 from django.shortcuts import reverse
 from django.utils.html import mark_safe
-from django_tables2 import Column
+from django_tables2 import Column, tables
 from django_tables2.utils import A
 
 from portfoliohut.models import PortfolioItem, Profile, Transaction

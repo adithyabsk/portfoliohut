@@ -1,7 +1,7 @@
 """PortfolioHut views"""
 
 from .account_management import login_action, logout_action, register_action
-from .base import friends_competition, global_competition, landing_page
+from .base import display_table, friends_competition, global_competition, landing_page
 from .portfolio import portfolio
 from .profile import friend, logged_in_user_profile, profile, respond_to_friend_request
 from .transactions import transaction_input
@@ -19,4 +19,5 @@ __all__ = [
     "transaction_input",
     "profile",
     "portfolio",
+    "display_table",
 ]

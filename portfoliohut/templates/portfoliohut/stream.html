@@ -1,15 +1,17 @@
 {% extends 'portfoliohut/base.html' %}
 {% load static %}
+<!-- {% load render_table from django_tables2 %} -->
 {% block head %}
-  <script>
+{% load ajax_table from ajax_table %}
+  <!-- <script>
       window.addEventListener("load",function(){
         let row = document.querySelectorAll('[data-username="{{request.user.username}}"]')[0];
         row.classList.add("bg-light");
       }, false);
-  </script>
+  </script> -->
   <title>{{ page_name }}</title>
 {% endblock head %}
-{% load render_table from django_tables2 %}
+<!-- {% load render_table from django_tables2 %} -->
 
 {% block content %}
   <!-- Page Title -->
@@ -22,13 +24,22 @@
         <a href="{% url 'global-competition' %}">here</a>.
       </h3>
     </div>
+  {% else %}
+
+    <!-- Graph -->
+    {% if graph %}
+      {{ graph|safe }}
+    {% endif %}
+
+    <!-- Spinner -->
+    <div class="spinner-border" role="status" id="spinner">
+      <span class="sr-only">Loading...</span>
+    </div>
+
+    <!-- Competition Table -->
+    <div class="container invisible" role="status" id="content">
+      {% ajax_table "competition_table_id" "display-table" %}
+    </div>
   {% endif %}
-  <!-- Graph -->
-  {% if graph %}
-    {{ graph|safe }}
-  {% endif %}
-  <!-- Competition Table -->
-  {% if competition_table %}
-    {% render_table competition_table %}
-  {% endif %}
+
 {% endblock content %}

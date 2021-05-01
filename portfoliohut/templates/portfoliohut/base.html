@@ -17,7 +17,6 @@
 
   {# Custom JS #}
   <script src="{% static 'portfoliohut/js/spinner.js' %}" type="text/javascript"></script>
-  <script src="{% static 'portfoliohut/js/competition.js' %}" type="text/javascript"></script>
 
   {% block head %}
   {% endblock head %}
@@ -94,15 +93,8 @@
 {#  {% endfor %}#}
   {% bootstrap_messages %}
 
-  <!-- Spinner -->
-  <div class="spinner-border" role="status" id="spinner">
-    <span class="sr-only">Loading...</span>
-  </div>
-
-  <div class="container invisible" role="status" id="content"></div>
     {% block content %}
     {% endblock content %}
-  </div>
 
 </div>
 </body>

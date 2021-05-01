@@ -44,6 +44,7 @@ INSTALLED_APPS = [
     "bootstrap4",
     "bootstrap_datepicker_plus",
     "django_tables2",
+    "django_ajax_tables",
 ]
 
 MIDDLEWARE = [
