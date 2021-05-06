@@ -15,7 +15,7 @@ NUM_TRANSACTIONS = 10
 @login_required
 def returns_graph(request):
     profile = get_object_or_404(Profile, user=request.user)
-    graph_data = profile.get_cumulative_returns().to_series() * 100
+    graph_data = profile.get_cumulative_returns().to_series()
     graph = None
     if not graph_data.empty:
         start_date = graph_data.index[0]
@@ -36,7 +36,7 @@ def portfolio(request):
         profile = get_object_or_404(Profile, user=request.user)
 
         has_returns = True
-        returns = profile.get_most_recent_return() * 100
+        returns = profile.get_most_recent_return()
         if math.isnan(returns):
             has_returns = False
 

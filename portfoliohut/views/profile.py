@@ -22,7 +22,7 @@ def profile_returns(request, username):
     if not user.exists():
         return HttpResponse("")
     user = user[0]
-    returns = user.profile.get_most_recent_return() * 100
+    returns = user.profile.get_most_recent_return()
     if math.isnan(returns):
         return HttpResponse("<h5 class='font-weight-bold mb-0 d-block'>No Return %<h5>")
     return HttpResponse(
@@ -62,7 +62,7 @@ def profile(request, username):
             stocks_urls.append((EquityInfo.objects.get_ticker(i["ticker"])).logo_url)
 
     context["top_stocks"] = stocks_urls
-    context["returns"] = profile.get_most_recent_return() * 100
+    context["returns"] = profile.get_most_recent_return()
     # Handle GET request
     if request.method == "GET":
         if profile.user == request.user:

@@ -1,6 +1,7 @@
 import io
 from datetime import datetime
 from decimal import Decimal
+from pathlib import Path
 
 import numpy as np
 import pandas as pd
@@ -15,6 +16,8 @@ from tqdm import tqdm
 
 from portfoliohut.forms import CSVForm
 from portfoliohut.models import HistoricalEquity, Profile
+
+REPO_PATH = Path(__file__).parent / "../../.."
 
 TZ = pytz.timezone("America/New_York")
 tech_stock_list = pd.Series(
@@ -41,16 +44,22 @@ tech_stock_list = pd.Series(
 )
 
 
-def create_random_user(seed: int):
-    """Create data for a demo user.
+def _save_dataframe(profile, df):
+    output_stream = io.BytesIO()
+    df.to_csv(output_stream, index=False)
+    csv_file = SimpleUploadedFile.from_dict(
+        {
+            "filename": "temp.csv",
+            "content": output_stream.getvalue(),
+        }
+    )
+    csv_form = CSVForm(files={"csv_file": csv_file}, profile=profile)
+    # the is_valid function does the actual checking and saving
+    if not csv_form.is_valid():
+        raise ValueError("The transaction data is invalid")
 
-    Username and password are demo{seed}.
 
-    The stock algo buys the first N unique stocks and then the remaining M*2 stocks follow a buy,
-    sell pattern. Here M*2 must be less than N. The M stocks are selected in order of appearance in
-    the first N stocks.
-
-    """
+def create_base_user_models(seed: int):
     # Create Demo User
     with transaction.atomic():
         user = User.objects.create(
@@ -67,6 +76,27 @@ def create_random_user(seed: int):
         profile = Profile(user=user)
         profile.save()
 
+    return user, profile
+
+
+def create_simple_user(seed: int):
+    _, profile = create_base_user_models(seed)
+    # Load simple sample data
+    df = pd.read_csv(REPO_PATH / "portfoliohut/static/portfoliohut/sample_upload.csv")
+    _save_dataframe(profile, df)
+
+
+def create_complex_user(seed: int):
+    """Create data for a demo user.
+
+    Username and password are demo{seed}.
+
+    The stock algo buys the first N unique stocks and then the remaining M*2 stocks follow a buy,
+    sell pattern. Here M*2 must be less than N. The M stocks are selected in order of appearance in
+    the first N stocks.
+
+    """
+    user, profile = create_base_user_models(seed)
     # Add stocks actions
     # this little algo buys the first N unique stocks and then the remaining M*2 stocks follow
     # a buy, sell pattern. Here M*2 must be less than N. The M stocks are selected in order of
@@ -131,24 +161,16 @@ def create_random_user(seed: int):
         )
         column_names = ["action", "date_time", "price", "ticker", "quantity"]
         df = pd.DataFrame(rows, columns=column_names)
-        output_stream = io.BytesIO()
-        df.to_csv(output_stream, index=False)
-        csv_file = SimpleUploadedFile.from_dict(
-            {
-                "filename": "temp.csv",
-                "content": output_stream.getvalue(),
-            }
-        )
-        csv_form = CSVForm(files={"csv_file": csv_file}, profile=profile)
-        # the is_valid function does the actual checking and saving
-        if not csv_form.is_valid():
-            raise ValueError("The transaction data is invalid")
+        _save_dataframe(profile, df)
 
 
 def load_demo_users():
     number_users = 3
     for i in tqdm(range(1, number_users + 1)):
-        create_random_user(i)
+        create_complex_user(i)
+
+    # number "4"
+    create_simple_user(number_users + 1)
 
 
 class Command(BaseCommand):

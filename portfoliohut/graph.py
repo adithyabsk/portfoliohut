@@ -26,6 +26,9 @@ def combine_data(list_series, friends_list, user_returns, index_returns):
 
 def multi_plot(df, addAll=True):
     fig = go.Figure()
+    fig.update_layout(legend_title_text="Time Weighted Cumulative Returns")
+    fig.update_xaxes(title_text="Date")
+    fig.update_yaxes(title_text="Return %")
 
     for column in df.columns.to_list():
         fig.add_trace(go.Scatter(x=df.index, y=df[column], name=column))

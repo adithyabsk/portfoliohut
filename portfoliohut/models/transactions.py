@@ -99,12 +99,6 @@ class TransactionManager(models.Manager):
         # out all of the buy actions. This is NOT actually your portfolio value but respects the
         # "locked" in gains
         profile_transactions = self.filter(profile=profile)
-        # relevant_transaction_qset = self.filter(profile=profile).filter(
-        #     type__in=[
-        #         FinancialActionType.EQUITY,
-        #         FinancialActionType.INTERNAL_CASH,
-        #     ]
-        # ).exclude(type=FinancialActionType.INTERNAL_CASH, quantity__lt=0)
 
         # Abort if there were no relevant transactions
         empty_series = pd.Series([], name="Returns")
@@ -182,7 +176,6 @@ class TransactionManager(models.Manager):
                 .cumsum()
                 .reindex(stocks_df.index, method="ffill")
                 .fillna(0)
-                # .astype(float)
             )
         else:
             internal_cash_series = pd.Series(
@@ -222,6 +215,11 @@ class TransactionManager(models.Manager):
             .sum(axis=1)
             .add(internal_cash_series.astype(float))
         )
+        # TODO: The reason that comp_df does not have the day of the initial transaction (i.e. returns as pushed
+        #       forward 2 days) is because cash flow is factored in on the next day as part of your portfolio value.
+        #       This results in incorrect returns computations so we have a lazy trick which results in that day being
+        #       nan in the shifted external_cash_series which causes comp_df to drop it as a nan row. This is a bug that
+        #       needs to be fixed.
         complete_portval = partial_portval + external_cash_series.cumsum().shift(
             1
         ).astype(float)
@@ -559,11 +557,18 @@ class EquityInfo(models.Model):
 
 
 class PortfolioReturnQuerySet(models.QuerySet):
-    def to_series(self):
-        qset = self.order_by("date").values_list("date", "returns")
+    def to_series(self, as_fraction=False):
+        """Build a returns `pd.Series` for a select `PortfolioReturnQuerySet`
+
+        Args:
+            as_fraction: Whether to output as a decimal or as "* 100"
+
+        """
+        qset = self.order_by("date").values_list("date", "cumprod")
+        multiplier = 1 if as_fraction else 100
         if qset.exists():
-            dates, returns = zip(*self.order_by("date").values_list("date", "returns"))
-            return pd.Series(returns, index=dates, name="returns")
+            dates, returns = zip(*self.order_by("date").values_list("date", "cumprod"))
+            return pd.Series(returns, index=dates, name="returns") * multiplier
         else:
             return pd.Series([], name="returns")
 

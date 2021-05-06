@@ -19,7 +19,7 @@ def _build_competition_table(profiles, request):
 def _annotate_profiles_with_returns(profiles, current_profile):
     [
         setattr(  # noqa: B010
-            profile, "returns", profile.get_most_recent_return() * 100
+            profile, "returns", profile.get_most_recent_return()
         )  # noqa: B010
         for profile in profiles
     ]
@@ -71,9 +71,9 @@ def display_friends_table(request):
 @login_required
 def global_competition(request):
     if request.method == "GET":
-        context = {}
-        context["page_name"] = "Global Competition"
-        return render(request, "portfoliohut/stream.html", context)
+        return render(
+            request, "portfoliohut/stream.html", {"page_name": "Global Competition"}
+        )
 
 
 @login_required
@@ -86,10 +86,10 @@ def friends_returns_graph(request):
     friends_series = []
     friends_names = []
     for profile in unsorted_friends_profiles:
-        friend_returns = profile.get_cumulative_returns()  # * 100
+        friend_returns = profile.get_cumulative_returns().to_series()
         friends_series.append(friend_returns)
         friends_names.append(profile.user.first_name + " " + profile.user.last_name)
-    user_returns = my_profile.get_cumulative_returns() * 100
+    user_returns = my_profile.get_cumulative_returns().to_series()
     index_returns = _get_sp_index(user_returns.index[0])
 
     # Create the competition graph
@@ -101,8 +101,7 @@ def friends_returns_graph(request):
 @login_required
 def friends_competition(request):
     if request.method == "GET":
-        context = {}
-        context["page_name"] = "Friends Competition"
+        context = {"page_name": "Friends Competition"}
 
         # Get all public profiles
         my_profile = Profile.objects.get(user=request.user)
