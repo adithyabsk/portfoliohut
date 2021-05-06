@@ -129,6 +129,11 @@ class StockForm(BaseTransactionForm):
         # the times are in UTC by default but incoming times are in ET
         day_df = nyse.schedule(start_date=date, end_date=date)
         cols = ["market_open", "market_close"]
+
+        for m in cols:
+            # Convert times to EST https://github.com/rsheftel/pandas_market_calendars/issues/42
+            day_df[m] = day_df[m].dt.tz_convert("America/New_York")
+
         market_open, market_close = day_df.loc[day_df.index[0], cols]
         if not market_open <= date_time <= market_close:
             raise forms.ValidationError(
@@ -183,6 +188,11 @@ class StockForm(BaseTransactionForm):
                 "Invalid action: Stock transactions must be BUY or SELL"
             )
         return action
+
+    def clean_ticker(self):
+        ticker = self.cleaned_data.get("ticker")
+        ticker = ticker.upper()
+        return ticker
 
     def clean_quantity(self):
         quantity = self.cleaned_data.get("quantity")

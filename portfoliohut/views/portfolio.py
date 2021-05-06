@@ -3,6 +3,7 @@ import math
 from django.contrib.auth.decorators import login_required
 from django.http import HttpResponse
 from django.shortcuts import get_object_or_404, render
+from django.utils.html import mark_safe
 
 from portfoliohut.graph import _get_sp_index, combine_index_user, multi_plot
 from portfoliohut.models import FinancialActionType, Profile
@@ -14,14 +15,15 @@ NUM_TRANSACTIONS = 10
 @login_required
 def returns_graph(request):
     profile = get_object_or_404(Profile, user=request.user)
-    graph_data = profile.get_cumulative_returns().to_series() * 100 * 10
+    graph_data = profile.get_cumulative_returns().to_series() * 100
     graph = None
     if not graph_data.empty:
         start_date = graph_data.index[0]
         index_data = _get_sp_index(start_date)
         merged_df = combine_index_user(graph_data, index_data)
         graph = multi_plot(merged_df)
-    return HttpResponse(graph)
+        return HttpResponse(graph)
+    return mark_safe("<table><table>")
 
 
 @login_required

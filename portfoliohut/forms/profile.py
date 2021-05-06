@@ -1,6 +1,13 @@
 from django import forms
+from django.utils.html import strip_tags
 
 from portfoliohut.models import Profile
+
+
+def sanitize(input_str):
+    # input_str = input_str.replace("<", "&lt;")
+    # input_str = input_str.replace(">", "&gt;")
+    return strip_tags(input_str)
 
 
 class ProfileForm(forms.ModelForm):
@@ -31,6 +38,11 @@ class ProfileForm(forms.ModelForm):
     def clean(self):
         cleaned_data = super().clean()
         return cleaned_data
+
+    def clean_bio(self):
+        bio = self.cleaned_data.get("bio")
+        bio = sanitize(bio)
+        return bio
 
     def clean_profile_type(self):
         profile_type = self.cleaned_data.get("profile_type")
