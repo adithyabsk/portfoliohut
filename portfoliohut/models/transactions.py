@@ -223,13 +223,17 @@ class TransactionManager(models.Manager):
         complete_portval = partial_portval + external_cash_series.cumsum().shift(
             1
         ).astype(float)
-        comp_df = pd.DataFrame(
-            {
-                "bpv": complete_portval.shift(1),  # yesterday portfolio value
-                "epv": complete_portval,  # today portfolio value
-                "cf": external_cash_series,  # cash flow
-            }
-        ).dropna()
+        comp_df = (
+            pd.DataFrame(
+                {
+                    "bpv": complete_portval.shift(1),  # yesterday portfolio value
+                    "epv": complete_portval,  # today portfolio value
+                    "cf": external_cash_series,  # cash flow
+                }
+            )
+            .dropna()
+            .astype(float)
+        )
         twr_series = comp_df.apply(
             lambda row: (row.epv - (row.bpv + row.cf)) / (row.bpv + row.cf), axis=1
         )
